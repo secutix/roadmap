@@ -38,11 +38,11 @@ $(function() {
 	});
 	reference.on("value", function(data) {
 		var reference = data.val();
+		var $elementContainer = $("#reference_items");
+		$elementContainer.html("");
 		if (!reference) {
 			return;
 		}
-		var $elementContainer = $("#reference_items");
-		$elementContainer.html("");
 		if (reference) {
 			$("#roadmap_items_tips").addClass("hidden");
 			reference.forEach(function(text, index) {
@@ -119,14 +119,7 @@ $(function() {
 	function createElement(text, index, changed, isReference) {
 		var $element = $([
 			"<p class=\"roadmap-item\" id=\"roadmap_item_" + index + "\">",
-			"<span class=\"roadmap-item-name\"></span>",
-			!isReference && index ? "<a href=\"#\" class=\"roadmap-item-up pull-right\">" : "",
-			!isReference && index ? "<span class=\"glyphicon glyphicon-arrow-up\" aria-hidden=\"true\"></span>" : "",
-			!isReference && index ? "</a>" : "",
-			!isReference ? "<a href=\"#\" class=\"roadmap-item-delete pull-right\">" : "",
-			!isReference ? "<span class=\"glyphicon glyphicon-trash\" aria-hidden=\"true\"></span>" : "",
-			!isReference ? "</a>" : "",
-			!isReference ? "<span class=\"roadmap-author pull-right\"></span>" : "",
+			"<span class=\"roadmap-item-name\"></span>", !isReference && index ? "<a href=\"#\" class=\"roadmap-item-up pull-right\">" : "", !isReference && index ? "<span class=\"glyphicon glyphicon-arrow-up\" aria-hidden=\"true\"></span>" : "", !isReference && index ? "</a>" : "", !isReference ? "<a href=\"#\" class=\"roadmap-item-delete pull-right\">" : "", !isReference ? "<span class=\"glyphicon glyphicon-trash\" aria-hidden=\"true\"></span>" : "", !isReference ? "</a>" : "", !isReference ? "<span class=\"roadmap-author pull-right\"></span>" : "",
 			"</p>"
 		].join(""));
 		$element.data("index", index);
