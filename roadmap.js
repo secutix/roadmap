@@ -105,7 +105,7 @@ $(function() {
 		var $elementContainer = $("#roadmap_items");
 		var newStoreView = [];
 		$elementContainer.html("");
-		if (store) {
+		if (store.length) {
 			$("#roadmap_items_tips").addClass("hidden");
 			store.forEach(function(text, index) {
 				if (thresholdValue && index === thresholdValue) {
@@ -124,18 +124,12 @@ $(function() {
 	function renderReference() {
 		var $elementContainer = $("#reference_items");
 		$elementContainer.html("");
-		if (!storeReference) {
-			return;
-		}
-		if (reference) {
-			$("#roadmap_items_tips").addClass("hidden");
-			storeReference.forEach(function(text, index) {
-				if (thresholdValue && index === thresholdValue) {
-					$elementContainer.append(thresholdMarkup);
-				}
-				$elementContainer.append(createElement(text, index, true, true, index >= thresholdValue));
-			});
-		}
+		storeReference.forEach(function(text, index) {
+			if (thresholdValue && index === thresholdValue) {
+				$elementContainer.append(thresholdMarkup);
+			}
+			$elementContainer.append(createElement(text, index, true, true, index >= thresholdValue));
+		});
 	}
 
 	function createElement(text, index, changed, isReference, isCandidate) {
