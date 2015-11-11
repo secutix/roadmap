@@ -106,3 +106,16 @@ footer {
     border-radius: 3px;
     margin-left: 10px;
 }
+@keyframes userActive {
+    from {
+        background-color: #ddd;
+        color: #999;
+    }
+    to {
+        background-color: #eee;
+        color: #bbb;
+    }
+}
+#online li.user-active {
+    animation: userActive 1s;
+}

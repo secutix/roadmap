@@ -42,13 +42,23 @@ $(function() {
 	}
 	history.limitToLast(1).on("child_added", function(childSnapshot, prevChildKey) {
 		var event = childSnapshot.val();
-		store.forEach(function(text, index) {
-			if (text == event.value && event.visa != visa) {
-				$("#roadmap_item_" + index + " .roadmap-author")
-					.text(event.visa)
-					.removeClass("roadmap-author-new").addClass("roadmap-author-new");
-			}
-		});
+		if (event.visa != visa) {
+			store.forEach(function(text, index) {
+				if (text == event.value) {
+					$("#roadmap_item_" + index + " .roadmap-author")
+						.text(event.visa)
+						.removeClass("roadmap-author-new");
+					setTimeout(function() {
+						$("#roadmap_item_" + index + " .roadmap-author")
+							.addClass("roadmap-author-new");
+					}, 10);
+				}
+			});
+		}
+		$("#user_" + event.visa).removeClass("user-active");
+		setTimeout(function() {
+			$("#user_" + event.visa).addClass("user-active");
+		}, 10);
 	});
 
 	// login & presence
@@ -76,6 +86,7 @@ $(function() {
 			$("#welcome ").fadeIn();
 			$("#visa_input").focus();
 			$("#main, nav, footer").addClass("hidden");
+			$("#admin_block").addClass("hidden");
 		}
 	});
 	presence.on("value", function(data) {
@@ -118,7 +129,7 @@ $(function() {
 			if (!online[key]) {
 				continue;
 			}
-			$online.append("<li>" + key + "</li>");
+			$online.append("<li id=\"user_" + key + "\">" + key + "</li>");
 		}
 	}
 
