@@ -140,3 +140,10 @@ footer {
 #online li.user-active {
     animation: userActive 1s;
 }
+
+/* CHARTING */
+#chart_container {
+    border: solid 1px #ddd;
+    background: white;
+    padding: 20px;
+}

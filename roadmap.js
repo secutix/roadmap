@@ -9,6 +9,15 @@ $(function() {
 
 	/**
 	 *
+	 * HELPERS
+	 *
+	 */
+	function format2(int) {
+		return int < 10 ? "0" + int : "" + int;
+	}
+
+	/**
+	 *
 	 * FUNCTIONAL
 	 *
 	 */
@@ -102,13 +111,96 @@ $(function() {
 			x: "x",
 			columns: [
 				["x"],
-			]
+			],
+			type: "area-spline"
+		},
+		axis: {
+			y: {
+				padding: 0
+			},
+			x: {
+				tick: {
+					format: function(x) {
+						var time = x * 10000;
+						var date = new Date(time);
+						return format2(date.getHours()) + ":" + format2(date.getMinutes());
+					}
+				}
+			}
+		},
+		transition: {
+			duration: 100
 		}
 	});
+
+	var times = [];
+	var saved = [];
+	var users = {};
+	var nbPoints = 60;
+
 	// build stats
 	history.on("child_added", function(childSnapshot) {
-
+		saved.push(childSnapshot.val());
 	});
+	// running
+	setInterval(function() {
+		var time = Math.floor(Date.now() / 10000);
+		var remaining = [];
+
+		// initial build
+		if (!times.length) {
+			for (var i = 0; i < nbPoints; i++) {
+				times.unshift(time - i);
+			}
+		}
+
+		// build new time
+		var index = times.indexOf(time);
+		if (index == -1) {
+			times.push(time);
+			times.shift();
+			for (var key in users) {
+				var userStats = users[key];
+				userStats.push(0);
+				userStats.shift();
+
+			}
+		}
+
+		// reintegrate values
+		saved.forEach(function(event) {
+			var time = Math.floor(event.time / 10000);
+			var visa = event.visa;
+			var lastTime = times[times.length - 1];
+			var index = times.indexOf(time);
+			// save this for later
+			if (index == -1 && time > lastTime) {
+				remaining.push(event);
+				return;
+			}
+			var userStats = users[visa];
+			if (!userStats) {
+				userStats = times.map(function() {
+					return 0;
+				});
+				users[visa] = userStats;
+			}
+			var value = userStats[index];
+			userStats[index] = !value ? 1 : value + 1;
+		});
+		saved = remaining;
+
+		// propagate to chart
+		var columns = [
+			["x"].concat(times)
+		];
+		for (var user in users) {
+			columns.push([user].concat(users[user]));
+		}
+		chart.load({
+			columns: columns
+		});
+	}, 500);
 
 	/**
 	 *
@@ -264,8 +356,8 @@ $(function() {
 		base.unauth();
 		return false;
 	});
-	$("nav_stats").on("click", function() {
-		$("#stats").toggleClass("hidden");
+	$("#nav_stats").on("click", function() {
+		$("#stats, #main").toggleClass("hidden");
 		return false;
 	});
 
