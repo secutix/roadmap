@@ -1,11 +1,13 @@
 $(function() {
 
-	var base = new Firebase("https://roadmap2.firebaseio.com/");
-	var roadmap = base.child("roadmap");
-	var reference = base.child("reference");
-	var threshold = base.child("threshold");
-	var history = base.child("history");
-	var presence = base.child("presence");
+	var hash = "room_" + window.location.hash.replace(/[\#\.\[\]\$]/g, "");
+	var base = new Firebase("https://amber-torch-7267.firebaseio.com/");
+	var room = base.child(hash);
+	var roadmap = room.child("roadmap");
+	var reference = room.child("reference");
+	var threshold = room.child("threshold");
+	var history = room.child("history");
+	var presence = room.child("presence");
 
 	/**
 	 *
@@ -72,7 +74,7 @@ $(function() {
 		if (authData) {
 			var uid = authData.uid;
 			console.log("Authenticated user with uid:", uid);
-			base.child("users/" + uid).on("value", function(data) {
+			room.child("users/" + uid).on("value", function(data) {
 				visa = data.val();
 				$("#main, nav, footer").removeClass("hidden");
 				$("#welcome").addClass("hidden");
@@ -80,7 +82,7 @@ $(function() {
 
 				//  online status
 				var amOnline = base.child(".info/connected");
-				var userRef = base.child("presence/" + visa);
+				var userRef = room.child("presence/" + visa);
 				amOnline.on("value", function(snapshot) {
 					if (snapshot.val()) {
 						userRef.onDisconnect().remove();
@@ -347,7 +349,7 @@ $(function() {
 				return;
 			}
 			var uid = authData.uid;
-			base.child("users/" + uid).set(visa);
+			room.child("users/" + uid).set(visa);
 			$("#welcome").hide();
 			$("#welcome .progress").addClass("hidden");
 		});
