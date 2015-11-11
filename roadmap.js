@@ -19,11 +19,11 @@ $(function() {
 	var thresholdValue = 0;
 
 	roadmap.on("value", function(newStoreResp) {
-		store = newStoreResp.val();
+		store = newStoreResp.val() || [];
 		renderRoadmap();
 	});
 	reference.on("value", function(data) {
-		storeReference = data.val();
+		storeReference = data.val() || [];
 		renderReference();
 
 	});
