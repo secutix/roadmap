@@ -22,6 +22,14 @@ footer {
     margin-bottom: 30px;
 }
 
+/* roadmap */
+#roadmap_items h5,
+#reference_items h5 {
+    font-style: italic;
+    color: #999;
+    margin-top: 20px;
+}
+
 @keyframes changedItem {
     from {
         transform: scale(1.03);
@@ -40,6 +48,10 @@ footer {
     background: white;
     box-shadow: 0 5px 20px -16px #333;
     transform-origin: 50% 50%;
+}
+.roadmap-item-candidate {
+    background: #FAFAFA;
+    border-color: #FAFAFA;
 }
 .roadmap-item-new {
     animation: changedItem 0.4s;
@@ -77,7 +89,7 @@ footer {
     background: #333;
 }
 
-#admin_roadmap_item {
+#admin_block input {
     background: #444;
     color: #eee;
     border: none;

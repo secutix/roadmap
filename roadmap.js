@@ -3,6 +3,7 @@ $(function() {
 	var base = new Firebase("https://amber-torch-7267.firebaseio.com/");
 	var roadmap = base.child("roadmap");
 	var reference = base.child("reference");
+	var threshold = base.child("threshold");
 	var history = base.child("history");
 	var presence = base.child("presence");
 
@@ -14,41 +15,22 @@ $(function() {
 
 	// roadmap
 	var store = [];
-	var storeView = [];
+	var storeReference = [];
+	var thresholdValue = 0;
+
 	roadmap.on("value", function(newStoreResp) {
-		var newStore = newStoreResp.val();
-		var newStoreView = [];
-		// update view, naïve way.
-		// should reuse elements
-		var $elementContainer = $("#roadmap_items");
-		$elementContainer.html("");
-		if (newStore) {
-			$("#roadmap_items_tips").addClass("hidden");
-			newStore.forEach(function(text, index) {
-				$elementContainer.append(createElement(text, index, storeView[index] != text));
-				newStoreView[index] = text;
-			});
-		} else {
-			$("#roadmap_items_tips").removeClass("hidden");
-		}
-		// save store
-		store = newStore ? newStore : [];
-		// keep a copy for the view
-		storeView = newStoreView;
+		store = newStoreResp.val();
+		renderRoadmap();
 	});
 	reference.on("value", function(data) {
-		var reference = data.val();
-		var $elementContainer = $("#reference_items");
-		$elementContainer.html("");
-		if (!reference) {
-			return;
-		}
-		if (reference) {
-			$("#roadmap_items_tips").addClass("hidden");
-			reference.forEach(function(text, index) {
-				$elementContainer.append(createElement(text, reference.length, true, true));
-			});
-		}
+		storeReference = data.val();
+		renderReference();
+
+	});
+	threshold.on("value", function(data) {
+		thresholdValue = data.val();
+		renderRoadmap();
+		renderReference();
 	});
 
 	function broadcast() {
@@ -116,9 +98,49 @@ $(function() {
 	 *
 	 */
 
-	function createElement(text, index, changed, isReference) {
+	var storeView = [];
+	var thresholdMarkup = "<h5>Candidates</h5>";
+
+	function renderRoadmap() {
+		var $elementContainer = $("#roadmap_items");
+		var newStoreView = [];
+		$elementContainer.html("");
+		if (store) {
+			$("#roadmap_items_tips").addClass("hidden");
+			store.forEach(function(text, index) {
+				if (thresholdValue && index === thresholdValue) {
+					$elementContainer.append(thresholdMarkup);
+				}
+				$elementContainer.append(createElement(text, index, storeView[index] != text, false, index >= thresholdValue));
+				newStoreView[index] = text;
+			});
+		} else {
+			$("#roadmap_items_tips").removeClass("hidden");
+		}
+		// keep a copy for the view
+		storeView = newStoreView;
+	}
+
+	function renderReference() {
+		var $elementContainer = $("#reference_items");
+		$elementContainer.html("");
+		if (!storeReference) {
+			return;
+		}
+		if (reference) {
+			$("#roadmap_items_tips").addClass("hidden");
+			storeReference.forEach(function(text, index) {
+				if (thresholdValue && index === thresholdValue) {
+					$elementContainer.append(thresholdMarkup);
+				}
+				$elementContainer.append(createElement(text, index, true, true, index >= thresholdValue));
+			});
+		}
+	}
+
+	function createElement(text, index, changed, isReference, isCandidate) {
 		var $element = $([
-			"<p class=\"roadmap-item\" id=\"roadmap_item_" + index + "\">",
+			"<p class=\"roadmap-item " + (isCandidate ? "roadmap-item-candidate" : "") + "\" id=\"roadmap_item_" + index + "\">",
 			"<span class=\"roadmap-item-name\"></span>", !isReference && index ? "<a href=\"#\" class=\"roadmap-item-up pull-right\">" : "", !isReference && index ? "<span class=\"glyphicon glyphicon-arrow-up\" aria-hidden=\"true\"></span>" : "", !isReference && index ? "</a>" : "", !isReference ? "<a href=\"#\" class=\"roadmap-item-delete pull-right\">" : "", !isReference ? "<span class=\"glyphicon glyphicon-trash\" aria-hidden=\"true\"></span>" : "", !isReference ? "</a>" : "", !isReference ? "<span class=\"roadmap-author pull-right\"></span>" : "",
 			"</p>"
 		].join(""));
@@ -161,6 +183,15 @@ $(function() {
 			store.push(value);
 			$item.val("");
 			broadcast();
+		}
+		return false;
+	});
+	$("#admin_threshold").on("submit", function() {
+		var $item = $("#admin_roadmap_threshold");
+		var value = parseInt($item.val(), 10);
+		if (!isNaN(value)) {
+			threshold.set(value);
+			$item.val("");
 		}
 		return false;
 	});
