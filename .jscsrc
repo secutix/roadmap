@@ -1,0 +1,15 @@
+{
+	"preset": "airbnb",
+	
+	"validateIndentation": "\t",
+	"validateQuoteMarks": {
+		"mark": "\"",
+		"escape": false
+	},
+	
+	"requirePaddingNewLinesAfterBlocks" : null,
+	"requireTrailingComma" : null,
+	"validateLineBreaks" : null,
+	"requirePaddingNewLinesBeforeLineComments" : null,
+	"requireCamelCaseOrUpperCaseIdentifiers" : null
+}
