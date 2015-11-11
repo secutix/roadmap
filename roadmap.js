@@ -2,6 +2,7 @@ $(function() {
 
 	var base = new Firebase("https://amber-torch-7267.firebaseio.com/");
 	var roadmap = base.child("roadmap");
+	var reference = base.child("reference");
 	var history = base.child("history");
 	var presence = base.child("presence");
 
@@ -20,12 +21,11 @@ $(function() {
 		// update view, naïve way.
 		// should reuse elements
 		var $elementContainer = $("#roadmap_items");
-		var $currentElement;
 		$elementContainer.html("");
 		if (newStore) {
 			$("#roadmap_items_tips").addClass("hidden");
 			newStore.forEach(function(text, index) {
-				$elementContainer.append(createElement(text, index, newStore.length, storeView[index] != text));
+				$elementContainer.append(createElement(text, index, storeView[index] != text));
 				newStoreView[index] = text;
 			});
 		} else {
@@ -35,6 +35,20 @@ $(function() {
 		store = newStore ? newStore : [];
 		// keep a copy for the view
 		storeView = newStoreView;
+	});
+	reference.on("value", function(data) {
+		var reference = data.val();
+		if (!reference) {
+			return;
+		}
+		var $elementContainer = $("#reference_items");
+		$elementContainer.html("");
+		if (reference) {
+			$("#roadmap_items_tips").addClass("hidden");
+			reference.forEach(function(text, index) {
+				$elementContainer.append(createElement(text, reference.length, true, true));
+			});
+		}
 	});
 
 	function broadcast() {
@@ -70,6 +84,7 @@ $(function() {
 			base.child("users/" + uid).on("value", function(data) {
 				visa = data.val();
 				$("#main, nav, footer").removeClass("hidden");
+				$("#welcome").addClass("hidden");
 				$("#visa").text(visa);
 
 				//  online status
@@ -83,7 +98,7 @@ $(function() {
 				});
 			});
 		} else {
-			$("#welcome ").fadeIn();
+			$("#welcome").removeClass("hidden");
 			$("#visa_input").focus();
 			$("#main, nav, footer").addClass("hidden");
 			$("#admin_block").addClass("hidden");
@@ -101,17 +116,17 @@ $(function() {
 	 *
 	 */
 
-	function createElement(text, index, total, changed) {
+	function createElement(text, index, changed, isReference) {
 		var $element = $([
 			"<p class=\"roadmap-item\" id=\"roadmap_item_" + index + "\">",
 			"<span class=\"roadmap-item-name\"></span>",
-			index ? "<a href=\"#\" class=\"roadmap-item-up pull-right\">" : "",
-			index ? "<span class=\"glyphicon glyphicon-arrow-up\" aria-hidden=\"true\"></span>" : "",
-			index ? "</a>" : "",
-			"<a href=\"#\" class=\"roadmap-item-delete pull-right\">",
-			"<span class=\"glyphicon glyphicon-trash\" aria-hidden=\"true\"></span>",
-			"</a>",
-			"<span class=\"roadmap-author pull-right\"></span>",
+			!isReference && index ? "<a href=\"#\" class=\"roadmap-item-up pull-right\">" : "",
+			!isReference && index ? "<span class=\"glyphicon glyphicon-arrow-up\" aria-hidden=\"true\"></span>" : "",
+			!isReference && index ? "</a>" : "",
+			!isReference ? "<a href=\"#\" class=\"roadmap-item-delete pull-right\">" : "",
+			!isReference ? "<span class=\"glyphicon glyphicon-trash\" aria-hidden=\"true\"></span>" : "",
+			!isReference ? "</a>" : "",
+			!isReference ? "<span class=\"roadmap-author pull-right\"></span>" : "",
 			"</p>"
 		].join(""));
 		$element.data("index", index);
@@ -154,6 +169,10 @@ $(function() {
 			$item.val("");
 			broadcast();
 		}
+		return false;
+	});
+	$("#nav_reference").on("click", function() {
+		reference.set(store);
 		return false;
 	});
 

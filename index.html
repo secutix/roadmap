@@ -36,13 +36,16 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Add</button>
             </form>
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="#" id="nav_reference">tag as reference</a></li>
+            </ul>
         </div>
     </div>
 
-    <section id="welcome">
+    <section id="welcome" class="hidden">
         <form>
             <div class="form-group">
-                <input type="text" class="form-control input-lg" id="visa_input" placeholder="Visa">
+                <input type="text" class="form-control input-lg" id="visa_input" placeholder="Visa" pattern="[a-Z]{3}" required>
             </div>
             <div class="text-center">
                 <button type="submit" class="btn btn-default btn-block">Enter</button>
@@ -56,20 +59,31 @@
     </section>
 
     <div class="container hidden" id="main">
-        <div class="row">
-            <section id="room" class="col-md-10 col-md-offset-1">
-                <h2>Roadmap</h2>
-                <article id="roadmap_items">
+
+        <section id="room">
+            <h2>Roadmap</h2>
+            <div class="row">
+                <article class="col-md-5">
+                    <h4>Reference</h4>
+                    <div id="reference_items"></div>
                 </article>
-                <div class="well hidden" id="roadmap_items_tips">
-                    <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-                    Want to add new items? Click admin in the top bar!
-                </div>
-                <article id="online_status">
-                    Online: <ul id="online" class="list-inline"></ul>
+                <article class="col-md-7">
+                    <h4>Forecast</h4>
+                    <div id="roadmap_items"></div>
                 </article>
-            </section>
-        </div>
+            </div>
+
+            <div class="well hidden" id="roadmap_items_tips">
+                <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                Want to add new items? Click
+                <strong>admin</strong> in the top bar!
+            </div>
+            <article id="online_status">
+                Online:
+                <ul id="online" class="list-inline"></ul>
+            </article>
+        </section>
+
     </div>
     <script src="roadmap.js"></script>
 </body>
