@@ -2,6 +2,7 @@ $(function() {
 
 	var base = new Firebase("https://amber-torch-7267.firebaseio.com/");
 	var roadmap = base.child("roadmap");
+	var history = base.child("history");
 	var presence = base.child("presence");
 
 	/**
@@ -10,6 +11,7 @@ $(function() {
 	 *
 	 */
 
+	// roadmap
 	var store = [];
 	var storeView = [];
 	roadmap.on("value", function(newStoreResp) {
@@ -21,7 +23,7 @@ $(function() {
 		var $currentElement;
 		$elementContainer.html("");
 		newStore.forEach(function(text, index) {
-			$elementContainer.append(createElement(text, index, storeView[index] != text));
+			$elementContainer.append(createElement(text, index, newStore.length, storeView[index] != text));
 			newStoreView[index] = text;
 		});
 		// save store
@@ -29,17 +31,28 @@ $(function() {
 		// keep a copy for the view
 		storeView = newStoreView;
 	});
-
 	function broadcast() {
 		roadmap.set(store);
 	}
+	history.on("child_added", function(childSnapshot, prevChildKey) {
+		var event = childSnapshot.val();
+		store.forEach(function(text, index) {
+			if (text == event.value && event.visa != visa) {
+				$("#roadmap_item_" + index + " .roadmap-author")
+					.text(event.visa)
+					.removeClass("roadmap-author-new").addClass("roadmap-author-new");
+			}
+		});
+	});
 
+	// login & presence
+	var visa;
 	base.onAuth(function(authData) {
 		if (authData) {
 			var uid = authData.uid;
 			console.log("Authenticated user with uid:", uid);
 			base.child("users/" + uid).on("value", function(data) {
-				var visa = data.val();
+				visa = data.val();
 				$("#main, nav, footer").removeClass("hidden");
 				$("#visa").text(visa);
 
@@ -59,7 +72,6 @@ $(function() {
 			$("#main, nav, footer").addClass("hidden");
 		}
 	});
-
 	presence.on("value", function(data) {
 		if (data) {
 			displayOnline(data.val());
@@ -72,13 +84,14 @@ $(function() {
 	 *
 	 */
 
-	function createElement(text, index, changed) {
+	function createElement(text, index, total, changed) {
 		var $element = $([
-			"<p class=\"roadmap-item\">",
+			"<p class=\"roadmap-item\" id=\"roadmap_item_" + index + "\">",
 			"<span class=\"roadmap-item-name\"></span>",
-			"<a href=\"#\" class=\"roadmap-item-up pull-right\">",
-			"<span class=\"glyphicon glyphicon-arrow-up\" aria-hidden=\"true\"></span>",
-			"</a>",
+			"<span class=\"roadmap-author\"></span>",
+			index ? "<a href=\"#\" class=\"roadmap-item-up pull-right\">" : "",
+			index ? "<span class=\"glyphicon glyphicon-arrow-up\" aria-hidden=\"true\"></span>" : "",
+			index ? "</a>" : "",
 			"<a href=\"#\" class=\"roadmap-item-delete pull-right\">",
 			"<span class=\"glyphicon glyphicon-trash\" aria-hidden=\"true\"></span>",
 			"</a>",
@@ -135,6 +148,15 @@ $(function() {
 			store[index] = store[index - 1];
 			store[index - 1] = value;
 			broadcast();
+			// also save changed
+			if (visa) {
+				historyRef = history.push();
+				historyRef.set({
+					visa: visa,
+					index: index,
+					value: value
+				});
+			}
 		}
 		return false;
 	}).on("click", ".roadmap-item-delete", function() {

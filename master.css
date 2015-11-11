@@ -51,6 +51,21 @@ footer {
     display: none;
     margin-right: 10px;
 }
+@keyframes newAuthor {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+.roadmap-author {
+    margin-left: 20px;
+    opacity: 0;
+}
+.roadmap-author-new {
+    animation: newAuthor 1s;
+}
 
 /* ADMIN */
 
