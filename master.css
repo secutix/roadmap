@@ -64,7 +64,7 @@ footer {
     opacity: 0;
 }
 .roadmap-author-new {
-    animation: newAuthor 1s;
+    animation: newAuthor 3s;
 }
 
 /* ADMIN */

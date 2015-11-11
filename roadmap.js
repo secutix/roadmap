@@ -22,12 +22,17 @@ $(function() {
 		var $elementContainer = $("#roadmap_items");
 		var $currentElement;
 		$elementContainer.html("");
-		newStore.forEach(function(text, index) {
-			$elementContainer.append(createElement(text, index, newStore.length, storeView[index] != text));
-			newStoreView[index] = text;
-		});
+		if (newStore) {
+			$("#roadmap_items_tips").addClass("hidden");
+			newStore.forEach(function(text, index) {
+				$elementContainer.append(createElement(text, index, newStore.length, storeView[index] != text));
+				newStoreView[index] = text;
+			});
+		} else {
+			$("#roadmap_items_tips").removeClass("hidden");
+		}
 		// save store
-		store = newStore;
+		store = newStore ? newStore : [];
 		// keep a copy for the view
 		storeView = newStoreView;
 	});
