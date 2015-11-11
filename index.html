@@ -23,6 +23,7 @@
                 <span id="visa"></span>
             </p>
             <ul class="nav navbar-nav navbar-right">
+                <li><a href="#" id="nav_stats">stats</a></li>
                 <li><a href="#" id="nav_admin">admin</a></li>
                 <li><a href="#" id="nav_logout">logout</a></li>
             </ul>
@@ -64,34 +65,42 @@
         </div>
     </section>
 
-    <div class="container hidden" id="main">
-
-        <section id="room">
-            <h2>Roadmap</h2>
-            <div class="row">
-                <article class="col-md-5">
-                    <h4>Reference</h4>
-                    <div id="reference_items"></div>
-                </article>
-                <article class="col-md-7">
-                    <h4>Forecast</h4>
-                    <div id="roadmap_items"></div>
-                </article>
-            </div>
-
-            <div class="well hidden" id="roadmap_items_tips">
-                <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-                Want to add new items? Click
-                <strong>admin</strong> in the top bar!
-            </div>
-            <article id="online_status">
-                Online:
-                <ul id="online" class="list-inline"></ul>
+    <section class="container hidden" id="main">
+        <h2>Roadmap</h2>
+        <div class="row">
+            <article class="col-md-5">
+                <h4>Reference</h4>
+                <div id="reference_items"></div>
             </article>
-        </section>
+            <article class="col-md-7">
+                <h4>Forecast</h4>
+                <div id="roadmap_items"></div>
+            </article>
+        </div>
 
-    </div>
+        <div class="well hidden" id="roadmap_items_tips">
+            <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+            Want to add new items? Click
+            <strong>admin</strong> in the top bar!
+        </div>
+        <article id="online_status">
+            Online:
+            <ul id="online" class="list-inline"></ul>
+        </article>
+    </section>
+    
+    <section class="container hidden" id="stats">
+        <article>
+            <h2>Last hour</h2>
+            <div id="chart"></div>
+        </article>
+    </section>
+    
+    
+    <script src="lib/d3.min.js"></script>
+    <script src="lib/c3.min.js"></script>
     <script src="roadmap.js"></script>
+    <link rel="stylesheet" href="lib/c3.min.css">
 </body>
 
 </html>

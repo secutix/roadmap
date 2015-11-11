@@ -1,6 +1,6 @@
 $(function() {
 
-	var base = new Firebase("https://amber-torch-7267.firebaseio.com/");
+	var base = new Firebase("https://roadmap2.firebaseio.com/");
 	var roadmap = base.child("roadmap");
 	var reference = base.child("reference");
 	var threshold = base.child("threshold");
@@ -82,7 +82,7 @@ $(function() {
 		} else {
 			$("#welcome").removeClass("hidden");
 			$("#visa_input").focus();
-			$("#main, nav, footer").addClass("hidden");
+			$("#main, #stats, nav, footer").addClass("hidden");
 			$("#admin_block").addClass("hidden");
 		}
 	});
@@ -90,6 +90,24 @@ $(function() {
 		if (data) {
 			displayOnline(data.val());
 		}
+	});
+
+	/**
+	 *
+	 * CHARTING
+	 *
+	 */
+	var chart = c3.generate({
+		data: {
+			x: "x",
+			columns: [
+				["x"],
+			]
+		}
+	});
+	// build stats
+	history.on("child_added", function(childSnapshot) {
+
 	});
 
 	/**
@@ -244,6 +262,10 @@ $(function() {
 	});
 	$("#nav_logout").on("click", function() {
 		base.unauth();
+		return false;
+	});
+	$("nav_stats").on("click", function() {
+		$("#stats").toggleClass("hidden");
 		return false;
 	});
 
