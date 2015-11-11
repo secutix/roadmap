@@ -99,3 +99,10 @@ footer {
 #online {
     display: inline;
 }
+#online li {
+    border: solid 1px white;
+    padding: 5px 10px;
+    color: #bbb;
+    border-radius: 3px;
+    margin-left: 10px;
+}
