@@ -31,10 +31,11 @@ $(function() {
 		// keep a copy for the view
 		storeView = newStoreView;
 	});
+
 	function broadcast() {
 		roadmap.set(store);
 	}
-	history.on("child_added", function(childSnapshot, prevChildKey) {
+	history.limitToLast(1).on("child_added", function(childSnapshot, prevChildKey) {
 		var event = childSnapshot.val();
 		store.forEach(function(text, index) {
 			if (text == event.value && event.visa != visa) {
@@ -88,13 +89,13 @@ $(function() {
 		var $element = $([
 			"<p class=\"roadmap-item\" id=\"roadmap_item_" + index + "\">",
 			"<span class=\"roadmap-item-name\"></span>",
-			"<span class=\"roadmap-author\"></span>",
 			index ? "<a href=\"#\" class=\"roadmap-item-up pull-right\">" : "",
 			index ? "<span class=\"glyphicon glyphicon-arrow-up\" aria-hidden=\"true\"></span>" : "",
 			index ? "</a>" : "",
 			"<a href=\"#\" class=\"roadmap-item-delete pull-right\">",
 			"<span class=\"glyphicon glyphicon-trash\" aria-hidden=\"true\"></span>",
 			"</a>",
+			"<span class=\"roadmap-author pull-right\"></span>",
 			"</p>"
 		].join(""));
 		$element.data("index", index);
