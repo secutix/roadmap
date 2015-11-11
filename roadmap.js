@@ -209,7 +209,8 @@ $(function() {
 				historyRef.set({
 					visa: visa,
 					index: index,
-					value: value
+					value: value,
+					time: Firebase.ServerValue.TIMESTAMP
 				});
 			}
 		}
