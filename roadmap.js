@@ -134,12 +134,13 @@ $(function() {
 
 	function createElement(text, index, changed, isReference, isCandidate) {
 		var $element = $([
-			"<p class=\"roadmap-item " + (isCandidate ? "roadmap-item-candidate" : "") + "\" id=\"roadmap_item_" + index + "\">",
+			"<p class=\"roadmap-item clearfix " + (isCandidate ? "roadmap-item-candidate" : "") + "\" id=\"roadmap_item_" + index + "\">",
 			"<span class=\"roadmap-item-name\"></span>", !isReference && index ? "<a href=\"#\" class=\"roadmap-item-up pull-right\">" : "", !isReference && index ? "<span class=\"glyphicon glyphicon-arrow-up\" aria-hidden=\"true\"></span>" : "", !isReference && index ? "</a>" : "", !isReference ? "<a href=\"#\" class=\"roadmap-item-delete pull-right\">" : "", !isReference ? "<span class=\"glyphicon glyphicon-trash\" aria-hidden=\"true\"></span>" : "", !isReference ? "</a>" : "", !isReference ? "<span class=\"roadmap-author pull-right\"></span>" : "",
 			"</p>"
 		].join(""));
 		$element.data("index", index);
 		$element.find(".roadmap-item-name").text(text);
+		$element.attr("title", text);
 		if (changed) {
 			$element.addClass("roadmap-item-new");
 		}

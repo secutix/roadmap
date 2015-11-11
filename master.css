@@ -48,6 +48,16 @@ footer {
     background: white;
     box-shadow: 0 5px 20px -16px #333;
     transform-origin: 50% 50%;
+    height: 42px;
+}
+.roadmap-item-name {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    display: inline-block;
+    box-sizing: border-box;
+    width: 85%;
+    float: left;
 }
 .roadmap-item-candidate {
     background: #FAFAFA;
