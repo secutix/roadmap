@@ -351,6 +351,8 @@ $(function() {
 			var uid = authData.uid;
 			room.child("users/" + uid).set(visa);
 			$("#welcome").hide();
+			$("#welcome form").show();
+			$("#welcome").addClass("hidden");
 			$("#welcome .progress").addClass("hidden");
 		});
 	});
