@@ -28,6 +28,7 @@ $(function() {
 	var store = [];
 	var storeReference = [];
 	var thresholdValue = 0;
+	var showingStats = false;
 
 	roadmap.on("value", function(newStoreResp) {
 		store = newStoreResp.val() || [];
@@ -74,7 +75,7 @@ $(function() {
 		if (authData) {
 			var uid = authData.uid;
 			console.log("Authenticated user with uid:", uid);
-			room.child("users/" + uid).on("value", function(data) {
+			base.child("users/" + uid).on("value", function(data) {
 				visa = data.val();
 				$("#main, nav, footer").removeClass("hidden");
 				$("#welcome").addClass("hidden");
@@ -192,6 +193,11 @@ $(function() {
 		});
 		saved = remaining;
 
+		// dont process if not showing
+		if (!showingStats) {
+			return false;
+		}
+
 		// propagate to chart
 		var columns = [
 			["x"].concat(times)
@@ -202,7 +208,7 @@ $(function() {
 		chart.load({
 			columns: columns
 		});
-	}, 500);
+	}, 2000);
 
 	/**
 	 *
@@ -349,7 +355,7 @@ $(function() {
 				return;
 			}
 			var uid = authData.uid;
-			room.child("users/" + uid).set(visa);
+			base.child("users/" + uid).set(visa);
 			$("#welcome").hide();
 			$("#welcome form").show();
 			$("#welcome").addClass("hidden");
@@ -362,6 +368,7 @@ $(function() {
 	});
 	$("#nav_stats").on("click", function() {
 		$("#stats, #main").toggleClass("hidden");
+		showingStats = !showingStats;
 		return false;
 	});
 
