@@ -238,7 +238,8 @@ $(function() {
 			}
 			var uid = authData.uid;
 			base.child("users/" + uid).set(visa);
-			$("#welcome").hide();
+			$("#welcome form").show();
+			$("#welcome").addClass("hidden");
 			$("#welcome .progress").addClass("hidden");
 		});
 	});
