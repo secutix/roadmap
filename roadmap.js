@@ -132,7 +132,9 @@ $(function() {
 	function createElement(text, index, total, changed, isReference, isCandidate) {
 		var markup = [
 			"<div class=\"roadmap-item clearfix " + (isCandidate ? "roadmap-item-candidate" : "") + "\" " +
-			(!isReference ? "id=\"roadmap_item_" + index + "\"" : "") + "><div>",
+			(!isReference ? "id=\"roadmap_item_" + index + "\"" : "") + "  draggable=\"true\">",
+			"<div>",
+			"<span class=\"grab-handle\"></span>",
 			"<span class=\"roadmap-item-name\"></span>"
 		];
 
