@@ -15,7 +15,7 @@ footer {
     left: 50%;
     top: 50%;
     margin-left: -150px;
-    margin-top: -60px;
+    margin-top: -80px;
 }
 
 #main {
@@ -74,6 +74,13 @@ footer {
     margin-left: 10px;
 }
 .roadmap-item-up {
+    margin-left: 10px;
+}
+.roadmap-item-down {
+    margin-left: 10px;
+}
+.roadmap-item:first-child .roadmap-item-down {
+    margin-right: 24px;
 }
 
 @keyframes newAuthor {
@@ -85,7 +92,7 @@ footer {
     }
 }
 .roadmap-author {
-    margin-right: 20px;
+    margin-right: 10px;
     margin-left: 20px;
     opacity: 0;
 }

@@ -10,7 +10,9 @@
     <script src='https://cdn.firebase.com/js/client/2.3.1/firebase.js'></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
+        integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ=="
+        crossorigin="anonymous">
     <link rel="stylesheet" href="master.css">
 </head>
 
@@ -19,10 +21,13 @@
     <nav class="navbar navbar-default navbar-static-top navbar-inverse hidden" role="navigation">
         <div class="container">
             <p class="navbar-text">
+                <a href="#" id="nav_toggle" class="visible-xs-inline pull-right">
+                    <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
+                </a>
                 Signed in as
                 <span id="visa"></span>
             </p>
-            <ul class="nav navbar-nav navbar-right">
+            <ul class="nav navbar-nav navbar-right hidden-xs">
                 <li><a href="#" id="nav_admin">admin</a></li>
                 <li><a href="#" id="nav_logout">logout</a></li>
             </ul>
