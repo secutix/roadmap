@@ -1,7 +1,10 @@
 $(function() {
 
 	var hash = "room_" + window.location.hash.replace(/[\#\.\[\]\$]/g, "");
-	var base = new Firebase("https://amber-torch-7267.firebaseio.com/");
+	// DEV - PROD switch
+	var baseDomain = window.location.host.indexOf("localhost") != -1 ? "roadmap2" : "amber-torch-7267";
+
+	var base = new Firebase("https://" + baseDomain + ".firebaseio.com/");
 	var room = base.child(hash);
 	var roadmap = room.child("roadmap");
 	var reference = room.child("reference");
@@ -50,19 +53,12 @@ $(function() {
 	}
 	history.limitToLast(1).on("child_added", function(childSnapshot, prevChildKey) {
 		var event = childSnapshot.val();
-		if (event.visa != visa) {
-			store.forEach(function(text, index) {
-				if (text == event.value) {
-					$("#roadmap_item_" + index + " .roadmap-author")
-						.text(event.visa)
-						.removeClass("roadmap-author-new");
-					setTimeout(function() {
-						$("#roadmap_item_" + index + " .roadmap-author")
-							.addClass("roadmap-author-new");
-					}, 10);
-				}
-			});
-		}
+		store.forEach(function(text, index) {
+			if (text == event.value) {
+				renderActionNotification(index, event);
+			}
+		});
+		// active user tracking
 		$("#user_" + event.visa).removeClass("user-active");
 		setTimeout(function() {
 			$("#user_" + event.visa).addClass("user-active");
@@ -222,14 +218,15 @@ $(function() {
 	function renderRoadmap() {
 		var $elementContainer = $("#roadmap_items");
 		var newStoreView = [];
+		var nbItems = store.length;
 		$elementContainer.html("");
-		if (store.length) {
+		if (nbItems) {
 			$("#roadmap_items_tips").addClass("hidden");
 			store.forEach(function(text, index) {
 				if (thresholdValue && index === thresholdValue) {
 					$elementContainer.append(thresholdMarkup);
 				}
-				$elementContainer.append(createElement(text, index, storeView[index] != text, false, index >= thresholdValue));
+				$elementContainer.append(createElement(text, index, nbItems, storeView[index] != text, false, index >= thresholdValue));
 				newStoreView[index] = text;
 			});
 		} else {
@@ -246,16 +243,37 @@ $(function() {
 			if (thresholdValue && index === thresholdValue) {
 				$elementContainer.append(thresholdMarkup);
 			}
-			$elementContainer.append(createElement(text, index, true, true, index >= thresholdValue));
+			$elementContainer.append(createElement(text, index, null, true, true, index >= thresholdValue));
 		});
 	}
 
-	function createElement(text, index, changed, isReference, isCandidate) {
-		var $element = $([
-			"<p class=\"roadmap-item clearfix " + (isCandidate ? "roadmap-item-candidate" : "") + "\" id=\"roadmap_item_" + index + "\">",
-			"<span class=\"roadmap-item-name\"></span>", !isReference && index ? "<a href=\"#\" class=\"roadmap-item-up pull-right\">" : "", !isReference && index ? "<span class=\"glyphicon glyphicon-arrow-up\" aria-hidden=\"true\"></span>" : "", !isReference && index ? "</a>" : "", !isReference ? "<a href=\"#\" class=\"roadmap-item-delete pull-right\">" : "", !isReference ? "<span class=\"glyphicon glyphicon-trash\" aria-hidden=\"true\"></span>" : "", !isReference ? "</a>" : "", !isReference ? "<span class=\"roadmap-author pull-right\"></span>" : "",
-			"</p>"
-		].join(""));
+	function createElement(text, index, total, changed, isReference, isCandidate) {
+		var markup = [
+			"<div class=\"roadmap-item clearfix " + (isCandidate ? "roadmap-item-candidate" : "") + "\" " +
+			(!isReference ? "id=\"roadmap_item_" + index + "\"" : "") + "><div>",
+			"<span class=\"roadmap-item-name\"></span>"
+		];
+
+		if (!isReference) {
+			var isNotLast = total && total - 1 != index;
+			var isFirst = !index; // formatting issue...
+			markup = markup.concat([
+				"<span class=\"roadmap-author\"></span>",
+				isNotLast ? "<a href=\"#\" class=\"roadmap-item-down\">" : "",
+				isNotLast ? "<span class=\"glyphicon glyphicon-arrow-down\" aria-hidden=\"true\"></span>" : "",
+				isNotLast ? "</a>" : "",
+				index ? "<a href=\"#\" class=\"roadmap-item-up\">" : "",
+				index ? "<span class=\"glyphicon glyphicon-arrow-up\" aria-hidden=\"true\"></span>" : "",
+				index ? "</a>" : "",
+				"<a href=\"#\" class=\"roadmap-item-delete\">",
+				"<span class=\"glyphicon glyphicon-trash\" aria-hidden=\"true\"></span>",
+				"</a>"
+			]);
+		}
+
+		markup.push("</div></div>");
+
+		var $element = $(markup.join(""));
 		$element.data("index", index);
 		$element.find(".roadmap-item-name").text(text);
 		$element.attr("title", text);
@@ -274,6 +292,19 @@ $(function() {
 			}
 			$online.append("<li id=\"user_" + key + "\">" + key + "</li>");
 		}
+	}
+
+	function renderActionNotification(index, event) {
+		var $item = $("#roadmap_item_" + index + " > div");
+		$item.removeClass("roadmap-item-notif-up, roadmap-item-notif-down");
+		$(".roadmap-author", $item)
+			.text(event.visa)
+			.removeClass("roadmap-author-new");
+		setTimeout(function() {
+			$item.addClass("roadmap-item-notif-" + (event.direction < 0 ? "up" : "down"));
+			$(".roadmap-author", $item)
+				.addClass("roadmap-author-new");
+		}, 10);
 	}
 
 	/**
@@ -313,13 +344,16 @@ $(function() {
 		return false;
 	});
 
-	$("#roadmap_items").on("click", ".roadmap-item-up", function() {
-		var index = $(this).parent(".roadmap-item").data("index");
-		if (index > 0) {
+	function swap(direction) {
+		return function() {
+			var index = $(this).parents(".roadmap-item").data("index");
+			if (index === null) {
+				return false;
+			}
 			// swap values
 			var value = store[index];
-			store[index] = store[index - 1];
-			store[index - 1] = value;
+			store[index] = store[index + direction];
+			store[index + direction] = value;
 			broadcast();
 			// also save changed
 			if (visa) {
@@ -328,17 +362,23 @@ $(function() {
 					visa: visa,
 					index: index,
 					value: value,
-					time: Firebase.ServerValue.TIMESTAMP
+					time: Firebase.ServerValue.TIMESTAMP,
+					direction: direction
 				});
 			}
-		}
-		return false;
-	}).on("click", ".roadmap-item-delete", function() {
-		var index = $(this).parent(".roadmap-item").data("index");
-		store.splice(index, 1);
-		broadcast();
-		return false;
-	});
+			return false;
+		};
+	}
+
+	$("#roadmap_items")
+		.on("click", ".roadmap-item-up", swap(-1))
+		.on("click", ".roadmap-item-down", swap(1))
+		.on("click", ".roadmap-item-delete", function() {
+			var index = $(this).parent(".roadmap-item").data("index");
+			store.splice(index, 1);
+			broadcast();
+			return false;
+		});
 
 	// login handlers
 	$("#welcome form").on("submit", function(event) {
@@ -366,10 +406,14 @@ $(function() {
 		base.unauth();
 		return false;
 	});
+
 	$("#nav_stats").on("click", function() {
 		$("#stats, #main").toggleClass("hidden");
 		showingStats = !showingStats;
 		return false;
+	});
+	$("#nav_toggle").on("click", function() {
+		$("nav .navbar-right").toggleClass("hidden-xs");
 	});
 
 });

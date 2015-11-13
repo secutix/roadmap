@@ -15,14 +15,15 @@ footer {
     left: 50%;
     top: 50%;
     margin-left: -150px;
-    margin-top: -60px;
+    margin-top: -90px;
 }
 
 #main {
     margin-bottom: 30px;
 }
 
-/* roadmap */
+/* ROADMAP */
+
 #roadmap_items h5,
 #reference_items h5 {
     font-style: italic;
@@ -43,25 +44,52 @@ footer {
     }
 }
 .roadmap-item {
-    border: solid 1px #ddd;
-    padding: 10px 15px;
-    background: white;
-    box-shadow: 0 5px 20px -16px #333;
+    border: solid 1px #ccc;
     transform-origin: 50% 50%;
-    height: 42px;
+    box-shadow: 0 5px 20px -16px #333;
+    margin-bottom: -1px;
+    background: white;
 }
+
+.roadmap-item > div {
+    padding: 5px 10px;
+    height: 32px;
+    display: flex;
+}
+
+@keyframes goingUp {
+    from {
+        background: #dff0d8;
+    }
+    to {
+        background: transparent;
+    }
+}
+@keyframes goingDown {
+    from {
+        background: #f2dede;
+    }
+    to {
+        background: transparent;
+    }
+}
+.roadmap-item-notif-up {
+    animation: goingUp 2s;
+}
+.roadmap-item-notif-down {
+    animation: goingDown 2s;
+}
+
 .roadmap-item-name {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
     display: inline-block;
-    box-sizing: border-box;
-    width: 85%;
-    float: left;
+    flex: 1;
 }
 .roadmap-item-candidate {
-    background: #FAFAFA;
-    border-color: #FAFAFA;
+    border-color: #eee;
+    background: #f4f4f4;
 }
 .roadmap-item-new {
     animation: changedItem 0.4s;
@@ -70,8 +98,18 @@ footer {
 .roadmap-item-delete {
     color: #a94442;
     display: none;
-    margin-right: 10px;
+    margin-left: 10px;
 }
+.roadmap-item-up {
+    margin-left: 10px;
+}
+.roadmap-item-down {
+    margin-left: 10px;
+}
+.roadmap-item:first-child .roadmap-item-down {
+    margin-right: 24px;
+}
+
 @keyframes newAuthor {
     from {
         opacity: 1;
@@ -81,11 +119,12 @@ footer {
     }
 }
 .roadmap-author {
-    margin-right: 20px;
+    margin-right: 10px;
+    margin-left: 20px;
     opacity: 0;
 }
 .roadmap-author-new {
-    animation: newAuthor 3s;
+    animation: newAuthor 2s;
 }
 
 /* ADMIN */
@@ -113,9 +152,11 @@ footer {
 }
 
 /* ONLINE */
+
 #online_status {
     font-size: small;
     text-align: right;
+    margin-top: 20px;
 }
 #online {
     display: inline;
@@ -126,10 +167,11 @@ footer {
     color: #bbb;
     border-radius: 3px;
     margin-left: 10px;
+    text-transform: uppercase;
 }
 @keyframes userActive {
     from {
-        background-color: #ddd;
+        background-color: #ccc;
         color: #999;
     }
     to {

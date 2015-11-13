@@ -19,10 +19,13 @@
     <nav class="navbar navbar-default navbar-static-top navbar-inverse hidden" role="navigation">
         <div class="container">
             <p class="navbar-text">
+                <a href="#" id="nav_toggle" class="visible-xs-inline pull-right">
+                    <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
+                </a>
                 Signed in as
                 <span id="visa"></span>
             </p>
-            <ul class="nav navbar-nav navbar-right">
+            <ul class="nav navbar-nav navbar-right hidden-xs">
                 <li><a href="#" id="nav_stats">stats</a></li>
                 <li><a href="#" id="nav_admin">admin</a></li>
                 <li><a href="#" id="nav_logout">logout</a></li>
@@ -50,6 +53,7 @@
     </div>
 
     <section id="welcome" class="hidden">
+        <h2 class="text-center">roadmap</h2>
         <form>
             <div class="form-group">
                 <input type="text" class="form-control input-lg" id="visa_input" placeholder="Visa" pattern="[a-Z]{3}" required>
@@ -66,13 +70,12 @@
     </section>
 
     <section class="container hidden" id="main">
-        <h2>Roadmap</h2>
         <div class="row">
-            <article class="col-md-5">
+            <article class="col-sm-5">
                 <h4>Reference</h4>
                 <div id="reference_items"></div>
             </article>
-            <article class="col-md-7">
+            <article class="col-sm-7">
                 <h4>Forecast</h4>
                 <div id="roadmap_items"></div>
             </article>
@@ -88,7 +91,7 @@
             <ul id="online" class="list-inline"></ul>
         </article>
     </section>
-    
+
     <section class="container hidden" id="stats">
         <article>
             <h2>Last 10 minutes</h2>
@@ -97,8 +100,8 @@
             </div>
         </article>
     </section>
-    
-    
+
+
     <script src="lib/d3.min.js"></script>
     <script src="lib/c3.min.js"></script>
     <script src="roadmap.js"></script>
