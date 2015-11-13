@@ -1,6 +1,9 @@
 $(function() {
 
-	var base = new Firebase("https://amber-torch-7267.firebaseio.com/");
+	// DEV - PROD switch
+	var baseDomain = window.location.host == "localhost" ? "amber-torch-7267" : "roadmap2";
+
+	var base = new Firebase("https://" + baseDomain + ".firebaseio.com/");
 	var roadmap = base.child("roadmap");
 	var reference = base.child("reference");
 	var threshold = base.child("threshold");
@@ -133,11 +136,26 @@ $(function() {
 	}
 
 	function createElement(text, index, changed, isReference, isCandidate) {
-		var $element = $([
+		var markup = [
 			"<p class=\"roadmap-item clearfix " + (isCandidate ? "roadmap-item-candidate" : "") + "\" id=\"roadmap_item_" + index + "\">",
-			"<span class=\"roadmap-item-name\"></span>", !isReference && index ? "<a href=\"#\" class=\"roadmap-item-up pull-right\">" : "", !isReference && index ? "<span class=\"glyphicon glyphicon-arrow-up\" aria-hidden=\"true\"></span>" : "", !isReference && index ? "</a>" : "", !isReference ? "<a href=\"#\" class=\"roadmap-item-delete pull-right\">" : "", !isReference ? "<span class=\"glyphicon glyphicon-trash\" aria-hidden=\"true\"></span>" : "", !isReference ? "</a>" : "", !isReference ? "<span class=\"roadmap-author pull-right\"></span>" : "",
-			"</p>"
-		].join(""));
+			"<span class=\"roadmap-item-name\"></span>"
+		];
+
+		if (!isReference) {
+			markup = markup.concat([
+				"<span class=\"roadmap-author\"></span>",
+				index ? "<a href=\"#\" class=\"roadmap-item-up\">" : "",
+				index ? "<span class=\"glyphicon glyphicon-arrow-up\" aria-hidden=\"true\"></span>" : "",
+				index ? "</a>" : "",
+				"<a href=\"#\" class=\"roadmap-item-delete\">",
+				"<span class=\"glyphicon glyphicon-trash\" aria-hidden=\"true\"></span>",
+				"</a>"
+			]);
+		}
+
+		markup.push("</p>");
+
+		var $element = $(markup.join(""));
 		$element.data("index", index);
 		$element.find(".roadmap-item-name").text(text);
 		$element.attr("title", text);
