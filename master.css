@@ -15,7 +15,7 @@ footer {
     left: 50%;
     top: 50%;
     margin-left: -150px;
-    margin-top: -80px;
+    margin-top: -90px;
 }
 
 #main {
@@ -44,15 +44,42 @@ footer {
     }
 }
 .roadmap-item {
-    border: solid 1px #ddd;
-    padding: 5px 10px;
-    background: white;
-    box-shadow: 0 5px 20px -16px #333;
+    border: solid 1px #ccc;
     transform-origin: 50% 50%;
-    height: 32px;
+    box-shadow: 0 5px 20px -16px #333;
     margin-bottom: -1px;
+    background: white;
+}
+
+.roadmap-item > div {
+    padding: 5px 10px;
+    height: 32px;
     display: flex;
 }
+
+@keyframes goingUp {
+    from {
+        background: #dff0d8;
+    }
+    to {
+        background: transparent;
+    }
+}
+@keyframes goingDown {
+    from {
+        background: #f2dede;
+    }
+    to {
+        background: transparent;
+    }
+}
+.roadmap-item-notif-up {
+    animation: goingUp 2s;
+}
+.roadmap-item-notif-down {
+    animation: goingDown 2s;
+}
+
 .roadmap-item-name {
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -61,8 +88,8 @@ footer {
     flex: 1;
 }
 .roadmap-item-candidate {
-    background: #FAFAFA;
     border-color: #eee;
+    background: #f4f4f4;
 }
 .roadmap-item-new {
     animation: changedItem 0.4s;
@@ -97,7 +124,7 @@ footer {
     opacity: 0;
 }
 .roadmap-author-new {
-    animation: newAuthor 3s;
+    animation: newAuthor 2s;
 }
 
 /* ADMIN */
@@ -140,10 +167,11 @@ footer {
     color: #bbb;
     border-radius: 3px;
     margin-left: 10px;
+    text-transform: uppercase;
 }
 @keyframes userActive {
     from {
-        background-color: #ddd;
+        background-color: #ccc;
         color: #999;
     }
     to {

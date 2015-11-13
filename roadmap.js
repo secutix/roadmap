@@ -41,19 +41,12 @@ $(function() {
 	}
 	history.limitToLast(1).on("child_added", function(childSnapshot, prevChildKey) {
 		var event = childSnapshot.val();
-		if (event.visa != visa) {
-			store.forEach(function(text, index) {
-				if (text == event.value) {
-					$("#roadmap_item_" + index + " .roadmap-author")
-						.text(event.visa)
-						.removeClass("roadmap-author-new");
-					setTimeout(function() {
-						$("#roadmap_item_" + index + " .roadmap-author")
-							.addClass("roadmap-author-new");
-					}, 10);
-				}
-			});
-		}
+		store.forEach(function(text, index) {
+			if (text == event.value) {
+				renderActionNotification(index, event);
+			}
+		});
+		// active user tracking
 		$("#user_" + event.visa).removeClass("user-active");
 		setTimeout(function() {
 			$("#user_" + event.visa).addClass("user-active");
@@ -138,7 +131,8 @@ $(function() {
 
 	function createElement(text, index, total, changed, isReference, isCandidate) {
 		var markup = [
-			"<p class=\"roadmap-item clearfix " + (isCandidate ? "roadmap-item-candidate" : "") + "\" id=\"roadmap_item_" + index + "\">",
+			"<div class=\"roadmap-item clearfix " + (isCandidate ? "roadmap-item-candidate" : "") + "\" " +
+			(!isReference ? "id=\"roadmap_item_" + index + "\"" : "") + "><div>",
 			"<span class=\"roadmap-item-name\"></span>"
 		];
 
@@ -159,7 +153,7 @@ $(function() {
 			]);
 		}
 
-		markup.push("</p>");
+		markup.push("</div></div>");
 
 		var $element = $(markup.join(""));
 		$element.data("index", index);
@@ -180,6 +174,19 @@ $(function() {
 			}
 			$online.append("<li id=\"user_" + key + "\">" + key + "</li>");
 		}
+	}
+
+	function renderActionNotification(index, event) {
+		var $item = $("#roadmap_item_" + index + " > div");
+		$item.removeClass("roadmap-item-notif-up, roadmap-item-notif-down");
+		$(".roadmap-author", $item)
+			.text(event.visa)
+			.removeClass("roadmap-author-new");
+		setTimeout(function() {
+			$item.addClass("roadmap-item-notif-" + (event.direction < 0 ? "up" : "down"));
+			$(".roadmap-author", $item)
+				.addClass("roadmap-author-new");
+		}, 10);
 	}
 
 	/**
@@ -221,7 +228,10 @@ $(function() {
 
 	function swap(direction) {
 		return function() {
-			var index = $(this).parent(".roadmap-item").data("index");
+			var index = $(this).parents(".roadmap-item").data("index");
+			if (index === null) {
+				return false;
+			}
 			// swap values
 			var value = store[index];
 			store[index] = store[index + direction];
