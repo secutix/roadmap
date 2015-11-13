@@ -1,7 +1,7 @@
 $(function() {
 
 	// DEV - PROD switch
-	var baseDomain = window.location.host == "localhost" ? "amber-torch-7267" : "roadmap2";
+	var baseDomain = window.location.host.indexOf("localhost") != -1 ? "roadmap2" : "amber-torch-7267";
 
 	var base = new Firebase("https://" + baseDomain + ".firebaseio.com/");
 	var roadmap = base.child("roadmap");
