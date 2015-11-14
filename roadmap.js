@@ -133,10 +133,14 @@ $(function() {
 		var markup = [
 			"<div class=\"roadmap-item clearfix " + (isCandidate ? "roadmap-item-candidate" : "") + "\" " +
 			(!isReference ? "id=\"roadmap_item_" + index + "\"" : "") + "  draggable=\"true\">",
-			"<div>",
-			"<span class=\"grab-handle\"></span>",
-			"<span class=\"roadmap-item-name\"></span>"
+			"<div>"
 		];
+
+		if (!isReference) {
+			markup.push("<span class=\"roadmap-item-grab-handle glyphicon glyphicon-move\"></span>");
+		}
+
+		markup.push("<span class=\"roadmap-item-name\"></span>");
 
 		if (!isReference) {
 			var isNotLast = total && total - 1 != index;
@@ -261,6 +265,48 @@ $(function() {
 			var index = $(this).parent(".roadmap-item").data("index");
 			store.splice(index, 1);
 			broadcast();
+			return false;
+		})
+		.on("dragstart", ".roadmap-item", function(event) {
+			event = event.originalEvent;
+			$item = $(this);
+			$item.addClass("roadmap-item-dragging");
+			$("#roadmap_items .roadmap-item:not(.roadmap-item-dragging)").addClass("roadmap-item-drop-target");
+			event.dataTransfer.effectAllowed = "move";
+			event.dataTransfer.setData("application/json", JSON.stringify({
+				index: $item.data("index"),
+				item: $item.find(".roadmap-item-name").text()
+			}));
+		})
+		.on("dragenter", ".roadmap-item", function(event) {
+			var $this = $(this);
+			if ($this.hasClass("roadmap-item-drop-target")) {
+				$(this).addClass("roadmap-item-drop-target-enter");
+			}
+		})
+		.on("dragover", ".roadmap-item", function(event) {
+			event = event.originalEvent;
+			event.dataTransfer.dropEffect = "move";
+			return false;
+		})
+		.on("dragleave", ".roadmap-item", function(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			var $this = $(this);
+			setTimeout(function() {
+				$this.removeClass("roadmap-item-drop-target-enter");
+			}, 100);
+		})
+		.on("dragend", ".roadmap-item", function() {
+			$(this).removeClass("roadmap-item-dragging");
+			$("#roadmap_items .roadmap-item").removeClass("roadmap-item-drop-target")
+				.removeClass("roadmap-item-drop-target-enter");
+		})
+		.on("drapdrop drop", ".roadmap-item", function(event) {
+			event = event.originalEvent;
+			var targetIndex = $(this).data("index");
+			var originIndex = JSON.parse(event.dataTransfer.getData("application/json")).index;
+			console.log("from " + originIndex + " to " + targetIndex);
 			return false;
 		});
 
