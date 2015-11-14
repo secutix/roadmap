@@ -306,7 +306,13 @@ $(function() {
 			event = event.originalEvent;
 			var targetIndex = $(this).data("index");
 			var originIndex = JSON.parse(event.dataTransfer.getData("application/json")).index;
-			console.log("from " + originIndex + " to " + targetIndex);
+			// removing will shift the index
+			if (originIndex < targetIndex) {
+				targetIndex--;
+			}
+			var item = store.splice(originIndex, 1);
+			store.splice(targetIndex, 0, item);
+			broadcast();
 			return false;
 		});
 
