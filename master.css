@@ -1,3 +1,7 @@
+html, body {
+    height: 100%;
+}
+
 body {
     background: #eee;
 }
@@ -216,6 +220,14 @@ footer {
     -webkit-box-shadow: none;
     box-shadow: none;
     background: #555;
+}
+
+#roadmap_items_download {
+    display: none;
+}
+
+.admin #roadmap_items_download {
+    display: inline-block;
 }
 
 /* ONLINE */
