@@ -10,9 +10,7 @@
     <script src='https://cdn.firebase.com/js/client/2.3.1/firebase.js'></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
-        integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ=="
-        crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
     <link rel="stylesheet" href="master.css">
 </head>
 
@@ -28,6 +26,7 @@
                 <span id="visa"></span>
             </p>
             <ul class="nav navbar-nav navbar-right hidden-xs">
+                <li><a href="#" id="nav_stats">stats</a></li>
                 <li><a href="#" id="nav_admin">admin</a></li>
                 <li><a href="#" id="nav_logout">logout</a></li>
             </ul>
@@ -48,6 +47,11 @@
                 <button type="submit" class="btn btn-primary">Set</button>
             </form>
             <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="#" id="roadmap_items_download">
+                        export
+                    </a>
+                </li>
                 <li><a href="#" id="nav_reference">tag as reference</a></li>
             </ul>
         </div>
@@ -70,36 +74,135 @@
         </div>
     </section>
 
-    <div class="container hidden" id="main">
-
-        <section id="room">
-            <div class="row">
-                <article class="col-sm-5">
-                    <h4>Reference</h4>
-                    <div id="reference_items"></div>
-                </article>
-                <article class="col-sm-7">
-                    <h4>
-                        Forecast
-                        <span class="glyphicon glyphicon-download pull-right" aria-hidden="true" id="roadmap_items_download"></span>
-                    </h4>
-                    <div id="roadmap_items"></div>
-                </article>
-            </div>
-
-            <div class="well hidden" id="roadmap_items_tips">
-                <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-                Want to add new items? Click
-                <strong>admin</strong> in the top bar!
-            </div>
-            <article id="online_status">
-                Online:
-                <ul id="online" class="list-inline"></ul>
+    <section class="container hidden" id="main">
+        <div class="row">
+            <article class="col-sm-5">
+                <h4>Reference</h4>
+                <div id="reference_items"></div>
             </article>
-        </section>
+            <article class="col-sm-7">
+                <h4>Forecast</h4>
+                <div id="roadmap_items"></div>
+            </article>
+        </div>
 
-    </div>
+        <div class="well hidden" id="roadmap_items_tips">
+            <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+            Want to add new items? Click
+            <strong>admin</strong> in the top bar!
+        </div>
+        <article id="online_status">
+            Online:
+            <ul id="online" class="list-inline"></ul>
+        </article>
+    </section>
+
+    <section class="container hidden" id="stats">
+        <h2>
+            Activity stats
+            <button type="button" class="close" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </h2>
+        <article>
+            <h3>Users</h3>
+            <div class="row">
+                <div class="col-sm-4">
+                    <div class="stats-card" id="stats_most_active">
+                        <div class="stats-card-icon">
+                            <span class="glyphicon glyphicon-fire" aria-hidden="true"></span>
+                        </div>
+                        <div class="stats-card-visa">
+                            ???
+                        </div>
+                        <div class="stats-card-legend" title="the most active user">
+                            Serial Clicker
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="stats-card" id="stats_most_up">
+                        <div class="stats-card-icon">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </div>
+                        <div class="stats-card-visa">
+                            ???
+                        </div>
+                        <div class="stats-card-legend" title="user who clicks the most on the up arrow">
+                            Thinking Positive
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="stats-card" id="stats_most_ref">
+                        <div class="stats-card-icon">
+                            <span></span>
+                        </div>
+                        <div class="stats-card-visa">
+                            ???
+                        </div>
+                        <div class="stats-card-legend" title="user who tend to push toward the reference">
+                            The Reference Agent
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-4">
+                    <div class="stats-card" id="stats_less_active">
+                        <div class="stats-card-icon">
+                            <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                        </div>
+                        <div class="stats-card-visa">
+                            ???
+                        </div>
+                        <div class="stats-card-legend" title="less active user among user participating">
+                            The Watcher
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="stats-card" id="stats_less_up">
+                        <div class="stats-card-icon">
+                            <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>
+                        </div>
+                        <div class="stats-card-visa">
+                            ???
+                        </div>
+                        <div class="stats-card-legend" title="user who clicks the most on the up arrow">
+                            Thinking Negative
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="stats-card" id="stats_less_ref">
+                        <div class="stats-card-icon">
+                            <span></span>
+                        </div>
+                        <div class="stats-card-visa">
+                            ???
+                        </div>
+                        <div class="stats-card-legend" title="user who push against the reference">
+                            The Rebellious Spirit
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+        <article>
+            <h3>Last 10 minutes</h3>
+            <div id="chart_container">
+                <div id="chart"></div>
+            </div>
+        </article>
+    </section>
+
+
+    <script src="lib/d3.min.js"></script>
+    <script src="lib/c3.min.js"></script>
     <script src="roadmap.js"></script>
+    <link rel="stylesheet" href="lib/c3.min.css">
 </body>
 
 </html>

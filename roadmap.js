@@ -1,14 +1,25 @@
 $(function() {
 
+	var hash = "room_" + window.location.hash.replace(/[\#\.\[\]\$]/g, "");
 	// DEV - PROD switch
 	var baseDomain = window.location.host.indexOf("localhost") != -1 ? "roadmap2" : "amber-torch-7267";
 
 	var base = new Firebase("https://" + baseDomain + ".firebaseio.com/");
-	var roadmap = base.child("roadmap");
-	var reference = base.child("reference");
-	var threshold = base.child("threshold");
-	var history = base.child("history");
-	var presence = base.child("presence");
+	var room = base.child(hash);
+	var roadmap = room.child("roadmap");
+	var reference = room.child("reference");
+	var threshold = room.child("threshold");
+	var history = room.child("history");
+	var presence = room.child("presence");
+
+	/**
+	 *
+	 * HELPERS
+	 *
+	 */
+	function format2(int) {
+		return int < 10 ? "0" + int : "" + int;
+	}
 
 	// stolen from piskel
 	function downloadAsFile(content, filename) {
@@ -36,6 +47,7 @@ $(function() {
 	var store = [];
 	var storeReference = [];
 	var thresholdValue = 0;
+	var showingStats = false;
 
 	roadmap.on("value", function(newStoreResp) {
 		store = newStoreResp.val() || [];
@@ -83,7 +95,7 @@ $(function() {
 
 				//  online status
 				var amOnline = base.child(".info/connected");
-				var userRef = base.child("presence/" + visa);
+				var userRef = room.child("presence/" + visa);
 				amOnline.on("value", function(snapshot) {
 					if (snapshot.val()) {
 						userRef.onDisconnect().remove();
@@ -94,7 +106,7 @@ $(function() {
 		} else {
 			$("#welcome").removeClass("hidden");
 			$("#visa_input").focus();
-			$("#main, nav, footer").addClass("hidden");
+			$("#main, #stats, nav, footer").addClass("hidden");
 			$("#admin_block").addClass("hidden");
 		}
 	});
@@ -103,6 +115,201 @@ $(function() {
 			displayOnline(data.val());
 		}
 	});
+
+	/**
+	 *
+	 * CHARTING
+	 *
+	 */
+	var chart = c3.generate({
+		data: {
+			x: "x",
+			columns: [
+				["x"],
+			],
+			type: "area-spline"
+		},
+		axis: {
+			y: {
+				padding: 0
+			},
+			x: {
+				tick: {
+					format: function(x) {
+						var time = x * 10000;
+						var date = new Date(time);
+						return format2(date.getHours()) + ":" + format2(date.getMinutes());
+					}
+				}
+			}
+		},
+		transition: {
+			duration: 100
+		}
+	});
+
+	var times = [];
+	var saved = [];
+	var users = {};
+	var userStats = {};
+	var nbPoints = 60;
+
+	history.on("child_added", function(childSnapshot) {
+		var event = childSnapshot.val();
+		saved.push(event);
+		// update user stats
+		var visa = event.visa;
+		var user = userStats[visa];
+		if (!user) {
+			user = {
+				up: 0,
+				down: 0,
+				total: 0,
+				toRef: 0,
+				againstRef: 0
+			};
+			userStats[visa] = user;
+		}
+		user.total++;
+		if (event.direction > 0) {
+			user.down++;
+			if (event.index >= event.refIndex) {
+				user.againstRef++;
+			} else {
+				user.toRef++;
+			}
+		} else {
+			user.up++;
+			if (event.index <= event.refIndex) {
+				user.againstRef++;
+			} else {
+				user.toRef++;
+			}
+		}
+	});
+	// running
+	var statRules = [{
+		id: "active",
+		fn: function(user) {
+			return user.total;
+		}
+	}, {
+		id: "up",
+		fn: function(user) {
+			return user.up * 100 / user.total;
+		}
+	}, {
+		id: "ref",
+		fn: function(user) {
+			return user.toRef * 100 / user.total;
+		}
+	}];
+
+	function showStats() {
+		var stats = statRules.map(function(rule) {
+			return {
+				id: rule.id,
+				most: {
+					value: null,
+					visa: "???"
+				},
+				less: {
+					value: null,
+					visa: "???"
+				}
+			};
+		});
+		// compute results
+		var handleRule = function(visa) {
+			return function(rule, index) {
+				var value = rule.fn(userStats[visa]);
+				var stat = stats[index];
+				var most = stat.most;
+				var less = stat.less;
+				if (most.value === null || value >= most.value) {
+					most.value = value;
+					most.visa = visa;
+				}
+				if (less.value === null || value < less.value) {
+					less.value = value;
+					less.visa = visa;
+				}
+			};
+		};
+		for (var visa in userStats) {
+			statRules.forEach(handleRule(visa));
+		}
+		// display results
+		stats.forEach(function(stat) {
+			$("#stats_most_" + stat.id + " .stats-card-visa").text(stat.most.visa);
+			$("#stats_less_" + stat.id + " .stats-card-visa").text(stat.less.visa);
+		});
+	}
+	setInterval(function() {
+		var time = Math.floor(Date.now() / 10000);
+		var remaining = [];
+
+		// initial build
+		if (!times.length) {
+			for (var i = 0; i < nbPoints; i++) {
+				times.unshift(time - i);
+			}
+		}
+
+		// build new time
+		var index = times.indexOf(time);
+		if (index == -1) {
+			times.push(time);
+			times.shift();
+			for (var key in users) {
+				var userStats = users[key];
+				userStats.push(0);
+				userStats.shift();
+
+			}
+		}
+
+		// reintegrate values
+		saved.forEach(function(event) {
+			var time = Math.floor(event.time / 10000);
+			var visa = event.visa;
+			var lastTime = times[times.length - 1];
+			var index = times.indexOf(time);
+			// save this for later
+			if (index == -1 && time > lastTime) {
+				remaining.push(event);
+				return;
+			}
+			var userStats = users[visa];
+			if (!userStats) {
+				userStats = times.map(function() {
+					return 0;
+				});
+				users[visa] = userStats;
+			}
+			var value = userStats[index];
+			userStats[index] = !value ? 1 : value + 1;
+		});
+		saved = remaining;
+
+		// dont process if not showing
+		if (!showingStats) {
+			return false;
+		}
+
+		// propagate to chart
+		var columns = [
+			["x"].concat(times)
+		];
+		for (var user in users) {
+			columns.push([user].concat(users[user]));
+		}
+		chart.load({
+			columns: columns
+		});
+		// update stats as well
+		showStats();
+	}, 2000);
 
 	/**
 	 *
@@ -304,10 +511,12 @@ $(function() {
 			broadcast();
 			// also save changed
 			if (visa) {
-				historyRef = history.push();
+				var refIndex = storeReference.indexOf(value);
+				var historyRef = history.push();
 				historyRef.set({
 					visa: visa,
 					index: index,
+					refIndex: refIndex,
 					value: value,
 					time: Firebase.ServerValue.TIMESTAMP,
 					direction: direction
@@ -401,6 +610,7 @@ $(function() {
 			}
 			var uid = authData.uid;
 			base.child("users/" + uid).set(visa);
+			$("#welcome").hide();
 			$("#welcome form").show();
 			$("#welcome").addClass("hidden");
 			$("#welcome .progress").addClass("hidden");
@@ -408,6 +618,13 @@ $(function() {
 	});
 	$("#nav_logout").on("click", function() {
 		base.unauth();
+		return false;
+	});
+
+	$("#nav_stats, #stats h2 .close").on("click", function() {
+		$("#stats, #main").toggleClass("hidden");
+		showingStats = !showingStats;
+		showStats();
 		return false;
 	});
 	$("#nav_toggle").on("click", function() {
