@@ -135,13 +135,100 @@ $(function() {
 	var times = [];
 	var saved = [];
 	var users = {};
+	var userStats = {};
 	var nbPoints = 60;
 
-	// build stats
 	history.on("child_added", function(childSnapshot) {
-		saved.push(childSnapshot.val());
+		var event = childSnapshot.val();
+		saved.push(event);
+		// update user stats
+		var visa = event.visa;
+		var user = userStats[visa];
+		if (!user) {
+			user = {
+				up: 0,
+				down: 0,
+				total: 0,
+				toRef: 0,
+				againstRef: 0
+			};
+			userStats[visa] = user;
+		}
+		user.total++;
+		if (event.direction > 0) {
+			user.down++;
+			if (event.index >= event.refIndex) {
+				user.againstRef++;
+			} else {
+				user.toRef++;
+			}
+		} else {
+			user.up++;
+			if (event.index <= event.refIndex) {
+				user.againstRef++;
+			} else {
+				user.toRef++;
+			}
+		}
 	});
 	// running
+	var statRules = [{
+		id: "active",
+		fn: function(user) {
+			return user.total;
+		}
+	}, {
+		id: "up",
+		fn: function(user) {
+			return user.up * 100 / user.total;
+		}
+	}, {
+		id: "ref",
+		fn: function(user) {
+			return user.toRef * 100 / user.total;
+		}
+	}];
+
+	function showStats() {
+		var stats = statRules.map(function(rule) {
+			return {
+				id: rule.id,
+				most: {
+					value: null,
+					visa: "???"
+				},
+				less: {
+					value: null,
+					visa: "???"
+				}
+			};
+		});
+		// compute results
+		var handleRule = function(visa) {
+			return function(rule, index) {
+				var value = rule.fn(userStats[visa]);
+				var stat = stats[index];
+				var most = stat.most;
+				var less = stat.less;
+				if (most.value === null || value >= most.value) {
+					most.value = value;
+					most.visa = visa;
+				}
+				if (less.value === null || value < less.value) {
+					less.value = value;
+					less.visa = visa;
+				}
+			};
+		};
+		for (var visa in userStats) {
+			statRules.forEach(handleRule(visa));
+		}
+		// display results
+		stats.forEach(function(stat) {
+			$("#stats_most_" + stat.id + " .stats-card-visa").text(stat.most.visa);
+			$("#stats_less_" + stat.id + " .stats-card-visa").text(stat.less.visa);
+		});
+	}
 	setInterval(function() {
 		var time = Math.floor(Date.now() / 10000);
 		var remaining = [];
@@ -204,6 +291,8 @@ $(function() {
 		chart.load({
 			columns: columns
 		});
+		// update stats as well
+		showStats();
 	}, 2000);
 
 	/**
@@ -365,10 +454,12 @@ $(function() {
 			broadcast();
 			// also save changed
 			if (visa) {
-				historyRef = history.push();
+				var refIndex = storeReference.indexOf(value);
+				var historyRef = history.push();
 				historyRef.set({
 					visa: visa,
 					index: index,
+					refIndex: refIndex,
 					value: value,
 					time: Firebase.ServerValue.TIMESTAMP,
 					direction: direction
@@ -473,9 +564,10 @@ $(function() {
 		return false;
 	});
 
-	$("#nav_stats").on("click", function() {
+	$("#nav_stats, #stats h2 .close").on("click", function() {
 		$("#stats, #main").toggleClass("hidden");
 		showingStats = !showingStats;
+		showStats();
 		return false;
 	});
 	$("#nav_toggle").on("click", function() {
