@@ -10,6 +10,22 @@ $(function() {
 	var history = base.child("history");
 	var presence = base.child("presence");
 
+	// stolen from piskel
+	function downloadAsFile(content, filename) {
+		var saveAs = window.saveAs || (navigator.msSaveBlob && navigator.msSaveBlob.bind(navigator));
+		if (saveAs) {
+			saveAs(content, filename);
+		} else {
+			var downloadLink = document.createElement("a");
+			content = window.URL.createObjectURL(content);
+			downloadLink.setAttribute("href", content);
+			downloadLink.setAttribute("download", filename);
+			document.body.appendChild(downloadLink);
+			downloadLink.click();
+			document.body.removeChild(downloadLink);
+		}
+	}
+
 	/**
 	 *
 	 * FUNCTIONAL
@@ -234,6 +250,47 @@ $(function() {
 		return false;
 	});
 
+	// upload / download
+	$("#roadmap_items_download").on("click", function() {
+		var content = JSON.stringify({
+			ref: storeReference,
+			store: store,
+			threshold: thresholdValue
+		});
+		downloadAsFile(new Blob([content], {
+			type: "application/json"
+		}), "roadmap.json");
+		return false;
+	});
+	$("body")
+		.on("dragover", function(event) {
+			event = event.originalEvent;
+			event.dataTransfer.dropEffect = "copy";
+			return false;
+		})
+		.on("drop", function(event) {
+			event = event.originalEvent;
+			var file = event.dataTransfer.files[0];
+			var reader = new FileReader();
+			reader.onload = function(event) {
+				var data = null;
+				try {
+					data = JSON.parse(event.target.result);
+				} catch (e) {
+					return;
+				}
+				if (data) {
+					threshold.set(data.threshold);
+					reference.set(data.ref);
+					store = data.store;
+					broadcast();
+				}
+			};
+			reader.readAsText(file);
+			return false;
+		});
+
+	// items handlers
 	function swap(direction) {
 		return function() {
 			var index = $(this).parents(".roadmap-item").data("index");
@@ -310,7 +367,7 @@ $(function() {
 			$("#roadmap_items .roadmap-item").removeClass("roadmap-item-drop-target")
 				.removeClass("roadmap-item-drop-target-enter");
 		})
-		.on("drapdrop drop", ".roadmap-item", function(event) {
+		.on("drop", ".roadmap-item", function(event) {
 			event = event.originalEvent;
 			var targetIndex = $(this).data("index");
 			var originIndex = JSON.parse(event.dataTransfer.getData("application/json")).index;
