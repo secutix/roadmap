@@ -271,7 +271,6 @@ $(function() {
 			event = event.originalEvent;
 			$item = $(this);
 			$item.addClass("roadmap-item-dragging");
-			$("#roadmap_items .roadmap-item:not(.roadmap-item-dragging)").addClass("roadmap-item-drop-target");
 			event.dataTransfer.effectAllowed = "move";
 			event.dataTransfer.setData("application/json", JSON.stringify({
 				index: $item.data("index"),

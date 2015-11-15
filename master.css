@@ -175,6 +175,10 @@ footer {
     background: rgba(256, 256, 256, 0.5);
 }
 
+#roadmap_items .roadmap-item:last-child {
+    border: none;
+}
+
 /* ADMIN */
 
 .admin .roadmap-item-delete {
