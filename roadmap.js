@@ -111,6 +111,8 @@ $(function() {
 				$elementContainer.append(createElement(text, index, nbItems, storeView[index] != text, false, index >= thresholdValue));
 				newStoreView[index] = text;
 			});
+			// add last element for DnD
+			$elementContainer.append("<div class=\"roadmap-item clearfix\"></div>");
 		} else {
 			$("#roadmap_items_tips").removeClass("hidden");
 		}
@@ -268,6 +270,9 @@ $(function() {
 			return false;
 		})
 		.on("dragstart", ".roadmap-item", function(event) {
+			if (!$("#main").hasClass("admin")) {
+				return false;
+			}
 			event = event.originalEvent;
 			$item = $(this);
 			$item.addClass("roadmap-item-dragging");
@@ -276,6 +281,11 @@ $(function() {
 				index: $item.data("index"),
 				item: $item.find(".roadmap-item-name").text()
 			}));
+			// delay target placeholder display, otherwise stops the drag because
+			// of the next element
+			setTimeout(function() {
+				$("#roadmap_items .roadmap-item:not(.roadmap-item-dragging)").addClass("roadmap-item-drop-target");
+			}, 100);
 		})
 		.on("dragenter", ".roadmap-item", function(event) {
 			var $this = $(this);
@@ -292,9 +302,8 @@ $(function() {
 			event.preventDefault();
 			event.stopPropagation();
 			var $this = $(this);
-			setTimeout(function() {
-				$this.removeClass("roadmap-item-drop-target-enter");
-			}, 100);
+			$this.removeClass("roadmap-item-drop-target-enter");
+
 		})
 		.on("dragend", ".roadmap-item", function() {
 			$(this).removeClass("roadmap-item-dragging");
@@ -305,6 +314,10 @@ $(function() {
 			event = event.originalEvent;
 			var targetIndex = $(this).data("index");
 			var originIndex = JSON.parse(event.dataTransfer.getData("application/json")).index;
+			// no index : push at the end
+			if (targetIndex !== 0 && !targetIndex) {
+				targetIndex = store.length;
+			}
 			// removing will shift the index
 			if (originIndex < targetIndex) {
 				targetIndex--;
