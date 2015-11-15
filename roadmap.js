@@ -10,6 +10,22 @@ $(function() {
 	var history = base.child("history");
 	var presence = base.child("presence");
 
+	// stolen from piskel
+	function downloadAsFile(content, filename) {
+		var saveAs = window.saveAs || (navigator.msSaveBlob && navigator.msSaveBlob.bind(navigator));
+		if (saveAs) {
+			saveAs(content, filename);
+		} else {
+			var downloadLink = document.createElement("a");
+			content = window.URL.createObjectURL(content);
+			downloadLink.setAttribute("href", content);
+			downloadLink.setAttribute("download", filename);
+			document.body.appendChild(downloadLink);
+			downloadLink.click();
+			document.body.removeChild(downloadLink);
+		}
+	}
+
 	/**
 	 *
 	 * FUNCTIONAL
@@ -231,6 +247,17 @@ $(function() {
 	});
 	$("#nav_reference").on("click", function() {
 		reference.set(store);
+		return false;
+	});
+	$("#roadmap_items_download").on("click", function() {
+		var content = JSON.stringify({
+			ref: storeReference,
+			store: store,
+			threshold: thresholdValue
+		});
+		downloadAsFile(new Blob([content], {
+			type: "application/json"
+		}), "roadmap.json");
 		return false;
 	});
 
