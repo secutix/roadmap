@@ -229,6 +229,8 @@ $(function() {
 				$elementContainer.append(createElement(text, index, nbItems, storeView[index] != text, false, index >= thresholdValue));
 				newStoreView[index] = text;
 			});
+			// add last element for DnD
+			$elementContainer.append("<div class=\"roadmap-item clearfix\"></div>");
 		} else {
 			$("#roadmap_items_tips").removeClass("hidden");
 		}
@@ -250,9 +252,15 @@ $(function() {
 	function createElement(text, index, total, changed, isReference, isCandidate) {
 		var markup = [
 			"<div class=\"roadmap-item clearfix " + (isCandidate ? "roadmap-item-candidate" : "") + "\" " +
-			(!isReference ? "id=\"roadmap_item_" + index + "\"" : "") + "><div>",
-			"<span class=\"roadmap-item-name\"></span>"
+			(!isReference ? "id=\"roadmap_item_" + index + "\"" : "") + "  draggable=\"true\">",
+			"<div>"
 		];
+
+		if (!isReference) {
+			markup.push("<span class=\"roadmap-item-grab-handle glyphicon glyphicon-move\"></span>");
+		}
+
+		markup.push("<span class=\"roadmap-item-name\"></span>");
 
 		if (!isReference) {
 			var isNotLast = total && total - 1 != index;
@@ -376,6 +384,64 @@ $(function() {
 		.on("click", ".roadmap-item-delete", function() {
 			var index = $(this).parent(".roadmap-item").data("index");
 			store.splice(index, 1);
+			broadcast();
+			return false;
+		})
+		.on("dragstart", ".roadmap-item", function(event) {
+			if (!$("#main").hasClass("admin")) {
+				return false;
+			}
+			event = event.originalEvent;
+			$item = $(this);
+			$item.addClass("roadmap-item-dragging");
+			event.dataTransfer.effectAllowed = "move";
+			event.dataTransfer.setData("application/json", JSON.stringify({
+				index: $item.data("index"),
+				item: $item.find(".roadmap-item-name").text()
+			}));
+			// delay target placeholder display, otherwise stops the drag because
+			// of the next element
+			setTimeout(function() {
+				$("#roadmap_items .roadmap-item:not(.roadmap-item-dragging)").addClass("roadmap-item-drop-target");
+			}, 100);
+		})
+		.on("dragenter", ".roadmap-item", function(event) {
+			var $this = $(this);
+			if ($this.hasClass("roadmap-item-drop-target")) {
+				$(this).addClass("roadmap-item-drop-target-enter");
+			}
+		})
+		.on("dragover", ".roadmap-item", function(event) {
+			event = event.originalEvent;
+			event.dataTransfer.dropEffect = "move";
+			return false;
+		})
+		.on("dragleave", ".roadmap-item", function(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			var $this = $(this);
+			$this.removeClass("roadmap-item-drop-target-enter");
+
+		})
+		.on("dragend", ".roadmap-item", function() {
+			$(this).removeClass("roadmap-item-dragging");
+			$("#roadmap_items .roadmap-item").removeClass("roadmap-item-drop-target")
+				.removeClass("roadmap-item-drop-target-enter");
+		})
+		.on("drapdrop drop", ".roadmap-item", function(event) {
+			event = event.originalEvent;
+			var targetIndex = $(this).data("index");
+			var originIndex = JSON.parse(event.dataTransfer.getData("application/json")).index;
+			// no index : push at the end
+			if (targetIndex !== 0 && !targetIndex) {
+				targetIndex = store.length;
+			}
+			// removing will shift the index
+			if (originIndex < targetIndex) {
+				targetIndex--;
+			}
+			var item = store.splice(originIndex, 1);
+			store.splice(targetIndex, 0, item);
 			broadcast();
 			return false;
 		});

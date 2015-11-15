@@ -127,10 +127,77 @@ footer {
     animation: newAuthor 2s;
 }
 
+/* DnD */
+.roadmap-item-grab-handle {
+    display:none;
+    margin-right: 10px;
+    margin-top: -6px;
+    line-height: 32px;
+    margin-left: -10px;
+    padding: 0px 10px;
+    background: #ddd;
+    height: 32px;
+    cursor: move;
+}
+.roadmap-item-dragging {
+    opacity: 0.4;
+}
+.roadmap-item-drop-target {
+    position: relative;
+}
+.roadmap-item-drop-target:before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: -16px;
+    left: -10px;
+    right: -10px;
+    height: 33px;
+    z-index: 1;
+    background: transparent;
+}
+.roadmap-item-drop-target-enter {
+    margin-top: 42px;
+}
+.roadmap-item-drop-target-enter:before {
+    top: -58px;
+    height: 75px;
+}
+.roadmap-item-drop-target-enter:after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: -37px;
+    left: 10px;
+    right: 10px;
+    height: 32px;
+    border: dashed 1px #aaa;
+    background: rgba(256, 256, 256, 0.5);
+}
+
+#roadmap_items .roadmap-item:last-child {
+    border: none;
+}
+
 /* ADMIN */
 
 .admin .roadmap-item-delete {
     display: inline;
+}
+
+.admin .roadmap-item-grab-handle {
+    display: inline-block;
+}
+
+/* Prevent the text contents of draggable elements from being selectable. */
+.admin [draggable] {
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+  /* Required to make elements draggable in old WebKit */
+  -khtml-user-drag: element;
+  -webkit-user-drag: element;
 }
 
 #admin_block {
