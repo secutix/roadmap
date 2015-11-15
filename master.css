@@ -222,14 +222,6 @@ footer {
     background: #555;
 }
 
-#roadmap_items_download {
-    display: none;
-}
-
-.admin #roadmap_items_download {
-    display: inline-block;
-}
-
 /* ONLINE */
 
 #online_status {
