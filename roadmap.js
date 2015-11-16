@@ -37,6 +37,15 @@ $(function() {
 		}
 	}
 
+	function getOrSet(object, key, defaultValue) {
+		var value = object[key];
+		if (value) {
+			return value;
+		}
+		object[key] = defaultValue;
+		return defaultValue;
+	}
+
 	/**
 	 *
 	 * FUNCTIONAL
@@ -159,34 +168,54 @@ $(function() {
 	var saved = [];
 	var users = {};
 	var userStats = {};
+	var itemStats = {};
 	var nbPoints = 60;
 
 	history.on("child_added", function(childSnapshot) {
 		var event = childSnapshot.val();
-		saved.push(event);
-		// update user stats
-		var visa = event.visa;
-		var user = userStats[visa];
-		if (!user) {
-			user = {
-				up: 0,
-				down: 0,
-				total: 0,
-				toRef: 0,
-				againstRef: 0
-			};
-			userStats[visa] = user;
+		var time = event.time;
+		var now = Date.now();
+
+		// filter event which are too old (>2h)
+		if (now - time > 720000) {
+			return;
 		}
+		saved.push(event);
+
+		var visa = event.visa;
+		var direction = event.direction;
+		var text = item.value;
+		var user = getOrSet(userStats, visa, {
+			up: 0,
+			down: 0,
+			total: 0,
+			toRef: 0,
+			againstRef: 0
+		});
+		var item = getOrSet(itemStats, text, {
+			up: 0,
+			total: 0,
+			upUsers: {},
+			downUsers: {}
+		});
+
 		user.total++;
-		if (event.direction > 0) {
+		item.total++;
+
+		if (direction > 0) {
 			user.down++;
+			getOrSet(item.downUsers, visa, 0);
+			item.downUsers[visa]++;
 			if (event.index >= event.refIndex) {
 				user.againstRef++;
 			} else {
 				user.toRef++;
 			}
 		} else {
+			item.up++;
 			user.up++;
+			getOrSet(item.upUsers, visa, 0);
+			item.upUsers[visa]++;
 			if (event.index <= event.refIndex) {
 				user.againstRef++;
 			} else {
