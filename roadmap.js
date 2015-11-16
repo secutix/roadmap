@@ -89,6 +89,13 @@ $(function() {
 			console.log("Authenticated user with uid:", uid);
 			base.child("users/" + uid).on("value", function(data) {
 				visa = data.val();
+
+				// prevent ghost user
+				if (!visa) {
+					base.unauth();
+					return;
+				}
+
 				$("#main, nav, footer").removeClass("hidden");
 				$("#welcome").addClass("hidden");
 				$("#visa").text(visa);
