@@ -624,7 +624,12 @@ $(function() {
 	$("#nav_stats, #stats h2 .close").on("click", function() {
 		$("#stats, #main").toggleClass("hidden");
 		showingStats = !showingStats;
-		showStats();
+		if (showStats) {
+			showStats();
+			if ($("#main").hasClass("admin")) {
+				$("#nav_admin").trigger("click");
+			}
+		}
 		return false;
 	});
 	$("#nav_toggle").on("click", function() {
