@@ -170,6 +170,7 @@ $(function() {
 	var userStats = {};
 	var itemStats = {};
 	var nbPoints = 60;
+	var historyLength = 0;
 
 	history.on("child_added", function(childSnapshot) {
 		var event = childSnapshot.val();
@@ -180,11 +181,12 @@ $(function() {
 		if (now - time > 720000) {
 			return;
 		}
+
 		saved.push(event);
 
 		var visa = event.visa;
 		var direction = event.direction;
-		var text = item.value;
+		var text = event.value;
 		var user = getOrSet(userStats, visa, {
 			up: 0,
 			down: 0,
@@ -221,6 +223,12 @@ $(function() {
 			} else {
 				user.toRef++;
 			}
+		}
+
+		// show menu link if enough history
+		if (historyLength != -1 && historyLength++ > 10) {
+			$("#nav_stats").removeClass("hidden");
+			historyLength = -1;
 		}
 	});
 	// running
