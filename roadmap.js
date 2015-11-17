@@ -574,7 +574,7 @@ $(function() {
 		.on("click", ".roadmap-item-up", swap(-1))
 		.on("click", ".roadmap-item-down", swap(1))
 		.on("click", ".roadmap-item-delete", function() {
-			var index = $(this).parent(".roadmap-item").data("index");
+			var index = $(this).parents(".roadmap-item").data("index");
 			store.splice(index, 1);
 			broadcast();
 			return false;
