@@ -249,7 +249,7 @@ $(function() {
 		}
 	}];
 
-	function showStats() {
+	function showUserStats() {
 		var stats = statRules.map(function(rule) {
 			return {
 				id: rule.id,
@@ -352,7 +352,7 @@ $(function() {
 			columns: columns
 		});
 		// update stats as well
-		showStats();
+		showUserStats();
 	}, 2000);
 
 	/**
@@ -669,7 +669,7 @@ $(function() {
 		$("#stats, #main").toggleClass("hidden");
 		showingStats = !showingStats;
 		if (showStats) {
-			showStats();
+			showUserStats();
 			if ($("#main").hasClass("admin")) {
 				$("#nav_admin").trigger("click");
 			}
