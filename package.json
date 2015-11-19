@@ -4,8 +4,8 @@
 	"description": "",
 	"main": "roadmap.js",
 	"scripts": {
-		"clean": "rimraf build",
-		"build:webpack": "webpack --config webpack.config.prod.js",
+		"clean": "rimraf dist",
+		"build:webpack": "webpack --config webpack.config.js",
 		"build": "npm run clean && npm run build:webpack",
 		"lint": "eslint source",
 		"server": "http-server",
