@@ -1,4 +1,6 @@
 /*global $ Firebase c3:true*/
+import * as helper from './helper';
+import * as view from './view';
 
 $(function() {
 
@@ -16,32 +18,6 @@ $(function() {
 
 	/**
 	 *
-	 * HELPERS
-	 *
-	 */
-
-	function format2(int) {
-		return int < 10 ? '0' + int : '' + int;
-	}
-
-	// stolen from piskel
-	function downloadAsFile(content, filename) {
-		var saveAs = window.saveAs || (navigator.msSaveBlob && navigator.msSaveBlob.bind(navigator));
-		if (saveAs) {
-			saveAs(content, filename);
-		} else {
-			var downloadLink = document.createElement('a');
-			var href = window.URL.createObjectURL(content);
-			downloadLink.setAttribute('href', href);
-			downloadLink.setAttribute('download', filename);
-			document.body.appendChild(downloadLink);
-			downloadLink.click();
-			document.body.removeChild(downloadLink);
-		}
-	}
-
-	/**
-	 *
 	 * SHARED VARS
 	 *
 	 */
@@ -53,130 +29,23 @@ $(function() {
 
 	/**
 	 *
-	 * VIEW
-	 *
-	 */
-
-	var storeView = [];
-	var thresholdMarkup = '<h5>Candidates</h5>';
-
-	function createElement(text, index, total, changed, isReference, isCandidate) {
-		var markup = [
-			'<div class="roadmap-item clearfix ' + (isCandidate ? 'roadmap-item-candidate' : '') + '"' +
-			(!isReference ? 'id="roadmap_item_' + index + '"' : '') + '  draggable="true">',
-			'<div>'
-		];
-
-		if (!isReference) {
-			markup.push('<span class="roadmap-item-grab-handle glyphicon glyphicon-move"></span>');
-		}
-
-		markup.push('<span class="roadmap-item-name"></span>');
-
-		if (!isReference) {
-			var isNotLast = total && total - 1 !== index;
-			markup = markup.concat([
-				'<span class="roadmap-author"></span',
-				isNotLast ? '<a href="#" class="roadmap-item-down">' : '',
-				isNotLast ? '<span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>' : '',
-				isNotLast ? '</a>' : '',
-				index ? '<a href="#" class="roadmap-item-up">' : '',
-				index ? '<span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>' : '',
-				index ? '</a>' : '',
-				'<a href="#" class="roadmap-item-delete">',
-				'<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>',
-				'</a>'
-			]);
-		}
-
-		markup.push('</div></div>');
-
-		var $element = $(markup.join(''));
-		$element.data('index', index);
-		$element.find('.roadmap-item-name').text(text);
-		$element.attr('title', text);
-		if (changed) {
-			$element.addClass('roadmap-item-new');
-		}
-		return $element;
-	}
-
-	function renderRoadmap() {
-		var $elementContainer = $('#roadmap_items');
-		var newStoreView = [];
-		var nbItems = store.length;
-		$elementContainer.html('');
-		if (nbItems) {
-			$('#roadmap_items_tips').addClass('hidden');
-			store.forEach(function(text, index) {
-				if (thresholdValue && index === thresholdValue) {
-					$elementContainer.append(thresholdMarkup);
-				}
-				$elementContainer.append(createElement(text, index, nbItems, storeView[index] !== text, false, index >= thresholdValue));
-				newStoreView[index] = text;
-			});
-			// add last element for DnD
-			$elementContainer.append('<div class=\'roadmap-item clearfix\'></div>');
-		} else {
-			$('#roadmap_items_tips').removeClass('hidden');
-		}
-		// keep a copy for the view
-		storeView = newStoreView;
-	}
-
-	function renderReference() {
-		var $elementContainer = $('#reference_items');
-		$elementContainer.html('');
-		storeReference.forEach(function(text, index) {
-			if (thresholdValue && index === thresholdValue) {
-				$elementContainer.append(thresholdMarkup);
-			}
-			$elementContainer.append(createElement(text, index, null, true, true, index >= thresholdValue));
-		});
-	}
-
-	function displayOnline(online) {
-		var $online = $('#online');
-		$online.html('');
-		for (var key in online) {
-			if (!online[key]) {
-				$online.append('<li id="user_' + key + '">' + key + '</li>');
-			}
-		}
-	}
-
-	function renderActionNotification(index, event) {
-		var $item = $('#roadmap_item_' + index + ' > div');
-		$item.removeClass('roadmap-item-notif-up, roadmap-item-notif-down');
-		$('.roadmap-author', $item)
-			.text(event.visa)
-			.removeClass('roadmap-author-new');
-		setTimeout(function() {
-			$item.addClass('roadmap-item-notif-' + (event.direction < 0 ? 'up' : 'down'));
-			$('.roadmap-author', $item)
-				.addClass('roadmap-author-new');
-		}, 10);
-	}
-
-	/**
-	 *
 	 * FUNCTIONAL
 	 *
 	 */
 
 	roadmap.on('value', function(newStoreResp) {
 		store = newStoreResp.val() || [];
-		renderRoadmap();
+		view.renderRoadmap(store, thresholdValue);
 	});
 	reference.on('value', function(data) {
 		storeReference = data.val() || [];
-		renderReference();
+		view.renderReference(storeReference, thresholdValue);
 
 	});
 	threshold.on('value', function(data) {
 		thresholdValue = data.val();
-		renderRoadmap();
-		renderReference();
+		view.renderRoadmap(store, thresholdValue);
+		view.renderReference(storeReference, thresholdValue);
 	});
 
 	function broadcast() {
@@ -186,7 +55,7 @@ $(function() {
 		var event = childSnapshot.val();
 		store.forEach(function(text, index) {
 			if (text === event.value) {
-				renderActionNotification(index, event);
+				view.renderActionNotification(index, event);
 			}
 		});
 		// active user tracking
@@ -227,7 +96,7 @@ $(function() {
 	});
 	presence.on('value', function(data) {
 		if (data) {
-			displayOnline(data.val());
+			view.displayOnline(data.val());
 		}
 	});
 
@@ -253,7 +122,7 @@ $(function() {
 					format: function(x) {
 						var time = x * 10000;
 						var date = new Date(time);
-						return format2(date.getHours()) + ':' + format2(date.getMinutes());
+						return helper.format2(date.getHours()) + ':' + helper.format2(date.getMinutes());
 					}
 				}
 			}
@@ -470,7 +339,7 @@ $(function() {
 			store: store,
 			threshold: thresholdValue
 		});
-		downloadAsFile(new Blob([content], {
+		helper.downloadAsFile(new Blob([content], {
 			type: 'application/json'
 		}), 'roadmap.json');
 		return false;
@@ -565,7 +434,7 @@ $(function() {
 				$(this).addClass('roadmap-item-drop-target-enter');
 			}
 		})
-		.on('dragover', '.roadmap-item', function() {
+		.on('dragover', '.roadmap-item', function(event) {
 			var originalEvent = event.originalEvent;
 			originalEvent.dataTransfer.dropEffect = 'move';
 			return false;

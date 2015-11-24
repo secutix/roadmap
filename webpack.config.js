@@ -6,13 +6,14 @@ module.exports = {
 	resolve: {
 		root: __dirname + '/source'
 	},
-	entry: './source/roadmap.js',
+	entry: './source/js/roadmap.js',
 	output: {
 		path: path.join(__dirname, 'dist'),
 		filename: 'roadmap.js'
 	},
 	plugins: [
 		new webpack.optimize.UglifyJsPlugin({
+			minimize: false,
 			compressor: {
 				warnings: false
 			}
