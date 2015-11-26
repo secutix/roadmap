@@ -132,43 +132,73 @@ $(function() {
 		}
 	});
 
+
 	var times = [];
 	var saved = [];
 	var users = {};
 	var userStats = {};
+	var itemStats = {};
 	var nbPoints = 60;
+	var historyLength = 0;
 
 	history.on('child_added', function(childSnapshot) {
 		var event = childSnapshot.val();
-		saved.push(event);
-		// update user stats
-		var eventVisa = event.visa;
-		var user = userStats[eventVisa];
-		if (!user) {
-			user = {
-				up: 0,
-				down: 0,
-				total: 0,
-				toRef: 0,
-				againstRef: 0
-			};
-			userStats[eventVisa] = user;
+		var time = event.time;
+		var now = Date.now();
+
+		// filter event which are too old (>2h)
+		if (now - time > 7200000) {
+			return;
 		}
+
+		saved.push(event);
+
+		var eventVisa = event.visa;
+		var direction = event.direction;
+		var text = event.value;
+		var user = helper.getOrSet(userStats, eventVisa, {
+			up: 0,
+			down: 0,
+			total: 0,
+			toRef: 0,
+			againstRef: 0
+		});
+		var item = helper.getOrSet(itemStats, text, {
+			up: 0,
+			total: 0,
+			upUsers: {},
+			downUsers: {},
+			text: text
+		});
+
 		user.total++;
-		if (event.direction > 0) {
+		item.total++;
+
+		if (direction > 0) {
 			user.down++;
+			helper.getOrSet(item.downUsers, eventVisa, 0);
+			item.downUsers[eventVisa]++;
 			if (event.index >= event.refIndex) {
 				user.againstRef++;
 			} else {
 				user.toRef++;
 			}
 		} else {
+			item.up++;
 			user.up++;
+			helper.getOrSet(item.upUsers, eventVisa, 0);
+			item.upUsers[eventVisa]++;
 			if (event.index <= event.refIndex) {
 				user.againstRef++;
 			} else {
 				user.toRef++;
 			}
+		}
+
+		// show menu link if enough history
+		if (historyLength !== -1 && historyLength++ > 10) {
+			$('#nav_stats').removeClass('hidden');
+			historyLength = -1;
 		}
 	});
 	// running
@@ -189,7 +219,7 @@ $(function() {
 		}
 	}];
 
-	function showStats() {
+	function showUserStats() {
 		var stats = statRules.map(function(rule) {
 			return {
 				id: rule.id,
@@ -204,19 +234,19 @@ $(function() {
 			};
 		});
 		// compute results
-		var handleRule = function(userVisa) {
+		var handleRule = function(currentVisa) {
 			return function(rule, index) {
-				var value = rule.fn(userStats[userVisa]);
+				var value = rule.fn(userStats[currentVisa]);
 				var stat = stats[index];
 				var most = stat.most;
 				var less = stat.less;
 				if (most.value === null || value >= most.value) {
 					most.value = value;
-					most.userVisa = userVisa;
+					most.visa = currentVisa;
 				}
 				if (less.value === null || value < less.value) {
 					less.value = value;
-					less.userVisa = userVisa;
+					less.visa = currentVisa;
 				}
 			};
 		};
@@ -228,6 +258,48 @@ $(function() {
 			$('#stats_most_' + stat.id + ' .stats-card-visa').text(stat.most.visa);
 			$('#stats_less_' + stat.id + ' .stats-card-visa').text(stat.less.visa);
 		});
+	}
+
+	function showItemStats() {
+		let totalSort = (a, b) => b.total - a.total;
+		// get top 3
+		let items = Object.keys(itemStats).map(key => itemStats[key])
+			.sort(totalSort);
+
+		for (let index = 0; index < 3; index++) {
+			let item = items[index];
+			let $container = $(`#stats_item_${index}`);
+			let $upContainer = $container.find('.stats-card-up');
+			let $downContainer = $container.find('.stats-card-down');
+			if (!item) {
+				$container.addClass('hidden');
+			} else {
+				$container.removeClass('hidden')
+					.find('.stats-card-name')
+					.text(item.text)
+					.attr('title', `${item.total} actions`);
+
+				// find who vote for/against
+				let upUser = Object.keys(item.upUsers).map(key => ({
+					total: item.upUsers[key],
+					visa: key
+				})).sort(totalSort)[0];
+				if (upUser) {
+					$upContainer.removeClass('hidden').find('.stats-card-item-visa').text(upUser.visa);
+				} else {
+					$upContainer.addClass('hidden');
+				}
+				let downUser = Object.keys(item.downUsers).map(key => ({
+					total: item.downUsers[key],
+					visa: key
+				})).sort(totalSort)[0];
+				if (downUser) {
+					$downContainer.removeClass('hidden').find('.stats-card-item-visa').text(downUser.visa);
+				} else {
+					$downContainer.addClass('hidden');
+				}
+			}
+		}
 	}
 
 	setInterval(function() {
@@ -246,11 +318,12 @@ $(function() {
 		if (index === -1) {
 			times.push(time);
 			times.shift();
-			Object.keys(users).forEach((key) => {
+			for (var key in users) {
 				var stats = users[key];
 				stats.push(0);
 				stats.shift();
-			});
+
+			}
 		}
 
 		// reintegrate values
@@ -260,19 +333,19 @@ $(function() {
 			var lastTime = times[times.length - 1];
 			var timeIndex = times.indexOf(eventTime);
 			// save this for later
-			if (timeIndex === -1 && time > lastTime) {
+			if (timeIndex === -1 && eventTime > lastTime) {
 				remaining.push(event);
 				return;
 			}
-			var stats = users[eventVisa];
-			if (!stats) {
-				stats = times.map(function() {
+			var currentStats = users[eventVisa];
+			if (!currentStats) {
+				currentStats = times.map(function() {
 					return 0;
 				});
-				users[eventVisa] = stats;
+				users[eventVisa] = currentStats;
 			}
-			var value = stats[timeIndex];
-			stats[timeIndex] = !value ? 1 : value + 1;
+			var value = currentStats[index];
+			currentStats[index] = !value ? 1 : value + 1;
 		});
 		saved = remaining;
 
@@ -291,8 +364,11 @@ $(function() {
 		chart.load({
 			columns: columns
 		});
+
 		// update stats as well
-		showStats();
+		showUserStats();
+		showItemStats();
+
 	}, 2000);
 
 	/**
@@ -499,8 +575,9 @@ $(function() {
 	$('#nav_stats, #stats h2 .close').on('click', function() {
 		$('#stats, #main').toggleClass('hidden');
 		showingStats = !showingStats;
-		if (showStats) {
-			showStats();
+		if (showingStats) {
+			showUserStats();
+			showItemStats();
 			if ($('#main').hasClass('admin')) {
 				$('#nav_admin').trigger('click');
 			}
