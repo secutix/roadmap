@@ -147,7 +147,7 @@ $(function() {
 		var now = Date.now();
 
 		// filter event which are too old (>2h)
-		if (now - time > 720000) {
+		if (now - time > 7200000) {
 			return;
 		}
 
@@ -167,7 +167,8 @@ $(function() {
 			up: 0,
 			total: 0,
 			upUsers: {},
-			downUsers: {}
+			downUsers: {},
+			text: text
 		});
 
 		user.total++;
@@ -258,6 +259,49 @@ $(function() {
 			$('#stats_less_' + stat.id + ' .stats-card-visa').text(stat.less.visa);
 		});
 	}
+
+	function showItemStats() {
+		let totalSort = (a, b) => b.total - a.total;
+		// get top 3
+		let items = Object.keys(itemStats).map(key => itemStats[key])
+			.sort(totalSort);
+
+		for (let index = 0; index < 3; index++) {
+			let item = items[index];
+			let $container = $(`#stats_item_${index}`);
+			let $upContainer = $container.find('.stats-card-up');
+			let $downContainer = $container.find('.stats-card-down');
+			if (!item) {
+				$container.addClass('hidden');
+			} else {
+				$container.removeClass('hidden')
+					.find('.stats-card-name')
+					.text(item.text)
+					.attr('title', `${item.total} actions`);
+
+				// find who vote for/against
+				let upUser = Object.keys(item.upUsers).map(key => ({
+					total: item.upUsers[key],
+					visa: key
+				})).sort(totalSort)[0];
+				if (upUser) {
+					$upContainer.removeClass('hidden').find('.stats-card-item-visa').text(upUser.visa);
+				} else {
+					$upContainer.addClass('hidden');
+				}
+				let downUser = Object.keys(item.downUsers).map(key => ({
+					total: item.downUsers[key],
+					visa: key
+				})).sort(totalSort)[0];
+				if (downUser) {
+					$downContainer.removeClass('hidden').find('.stats-card-item-visa').text(downUser.visa);
+				} else {
+					$downContainer.addClass('hidden');
+				}
+			}
+		}
+	}
+
 	setInterval(function() {
 		var time = Math.floor(Date.now() / 10000);
 		var remaining = [];
@@ -320,8 +364,11 @@ $(function() {
 		chart.load({
 			columns: columns
 		});
+
 		// update stats as well
 		showUserStats();
+		showItemStats();
+
 	}, 2000);
 
 	/**
@@ -530,6 +577,7 @@ $(function() {
 		showingStats = !showingStats;
 		if (showingStats) {
 			showUserStats();
+			showItemStats();
 			if ($('#main').hasClass('admin')) {
 				$('#nav_admin').trigger('click');
 			}
