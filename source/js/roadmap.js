@@ -16,6 +16,7 @@ const base = new Firebase('https://' + baseDomain + '.firebaseio.com/');
 
 let currentRoom = null;
 let showingStats = false;
+let visa = null;
 
 /**
  *
@@ -49,9 +50,7 @@ function linkRoom(room) {
 		});
 		// active user tracking
 		$('#user_' + event.visa).removeClass('user-active');
-		setTimeout(function() {
-			$('#user_' + event.visa).addClass('user-active');
-		}, 10);
+		setTimeout(() => $('#user_' + event.visa).addClass('user-active'), 10);
 	});
 	presence.on('value', function(data) {
 		if (data) {
@@ -75,72 +74,75 @@ function linkRoom(room) {
 
 
 // login & presence
-var visa;
 base.onAuth(function(authData) {
+	let hash = window.location.hash.replace(/[\#\.\[\]\$]/g, '');
+	if (hash) {
+		base.child('rooms/' + hash).once('value', function(data) {
+			let roomName = data.val();
+			$('#room_input').val(roomName);
+		});
+	}
 	if (authData) {
-		var uid = authData.uid;
+		let uid = authData.uid;
 		console.log('Authenticated user with uid:', uid);
 		base.child('users/' + uid).on('value', function(data) {
 			visa = data.val();
-
 			// build room
-			let hash = 'room_' + window.location.hash.replace(/[\#\.\[\]\$]/g, '');
-			currentRoom = new Room(base, hash, visa);
-			linkRoom(currentRoom);
+			if (!hash) {
+				let ref = base.child('rooms').push();
+				ref.set($('#room_input').val());
+				hash = ref.toString().replace(/.*\/([^\/]+)$/g, '$1');
+				window.location.hash = hash;
+			}
 
+			currentRoom = new Room(base, 'room_' + hash, visa);
+			linkRoom(currentRoom);
 			// update display
 			view.roadmapView(visa);
 		});
 	} else {
-		view.loginView();
+		view.loginView(hash);
 	}
 });
 
 
-var times = [];
-var users = {};
-var nbPoints = 60;
+let times = [];
+let users = {};
+let nbPoints = 60;
 
 // running
-var statRules = [{
+let statRules = [{
 	id: 'active',
-	fn: function(user) {
-		return user.total;
-	}
+	fn: (user) => user.total
 }, {
 	id: 'up',
-	fn: function(user) {
-		return user.up * 100 / user.total;
-	}
+	fn: (user) => user.up * 100 / user.total
 }, {
 	id: 'ref',
-	fn: function(user) {
-		return user.toRef * 100 / user.total;
-	}
+	fn: (user) => user.toRef * 100 / user.total
 }];
 
 function showUserStats() {
 	let userStats = currentRoom.userStats;
-	var stats = statRules.map(function(rule) {
-		return {
-			id: rule.id,
-			most: {
-				value: null,
-				visa: '???'
-			},
-			less: {
-				value: null,
-				visa: '???'
-			}
-		};
-	});
+	let stats = statRules.map((rule) => ({
+		id: rule.id,
+		most: {
+			value: null,
+			visa: '???'
+		},
+		less: {
+			value: null,
+			visa: '???'
+		}
+	}));
+
 	// compute results
-	var handleRule = function(currentVisa) {
+	let handleRule = function(currentVisa) {
 		return function(rule, index) {
-			var value = rule.fn(userStats[currentVisa]);
-			var stat = stats[index];
-			var most = stat.most;
-			var less = stat.less;
+			let value = rule.fn(userStats[currentVisa]);
+			let stat = stats[index];
+			let most = stat.most;
+			let less = stat.less;
 			if (most.value === null || value >= most.value) {
 				most.value = value;
 				most.visa = currentVisa;
@@ -151,7 +153,7 @@ function showUserStats() {
 			}
 		};
 	};
-	for (var userVisa in userStats) {
+	for (let userVisa in userStats) {
 		statRules.forEach(handleRule(userVisa));
 	}
 	// display results
@@ -210,23 +212,23 @@ setInterval(function() {
 		return;
 	}
 
-	var time = Math.floor(Date.now() / 10000);
-	var remaining = [];
+	let time = Math.floor(Date.now() / 10000);
+	let remaining = [];
 
 	// initial build
 	if (!times.length) {
-		for (var i = 0; i < nbPoints; i++) {
+		for (let i = 0; i < nbPoints; i++) {
 			times.unshift(time - i);
 		}
 	}
 
 	// build new time
-	var index = times.indexOf(time);
+	let index = times.indexOf(time);
 	if (index === -1) {
 		times.push(time);
 		times.shift();
-		for (var key in users) {
-			var stats = users[key];
+		for (let key in users) {
+			let stats = users[key];
 			stats.push(0);
 			stats.shift();
 
@@ -235,23 +237,23 @@ setInterval(function() {
 
 	// reintegrate values
 	currentRoom.savedStats.forEach(function(event) {
-		var eventTime = Math.floor(event.time / 10000);
-		var eventVisa = event.visa;
-		var lastTime = times[times.length - 1];
-		var timeIndex = times.indexOf(eventTime);
+		let eventTime = Math.floor(event.time / 10000);
+		let eventVisa = event.visa;
+		let lastTime = times[times.length - 1];
+		let timeIndex = times.indexOf(eventTime);
 		// save this for later
 		if (timeIndex === -1 && eventTime > lastTime) {
 			remaining.push(event);
 			return;
 		}
-		var currentStats = users[eventVisa];
+		let currentStats = users[eventVisa];
 		if (!currentStats) {
 			currentStats = times.map(function() {
 				return 0;
 			});
 			users[eventVisa] = currentStats;
 		}
-		var value = currentStats[index];
+		let value = currentStats[index];
 		currentStats[index] = !value ? 1 : value + 1;
 	});
 	currentRoom.savedStats = remaining;
@@ -262,10 +264,10 @@ setInterval(function() {
 	}
 
 	// propagate to chart
-	var columns = [
+	let columns = [
 		['x'].concat(times)
 	];
-	for (var user in users) {
+	for (let user in users) {
 		columns.push([user].concat(users[user]));
 	}
 	view.loadChart(columns);
@@ -290,8 +292,8 @@ $(() => {
 		return false;
 	});
 	$('#admin_add').on('submit', function() {
-		var $item = $('#admin_roadmap_item');
-		var value = $item.val();
+		let $item = $('#admin_roadmap_item');
+		let value = $item.val();
 		if (value) {
 			currentRoom.store.push(value);
 			$item.val('');
@@ -300,8 +302,8 @@ $(() => {
 		return false;
 	});
 	$('#admin_threshold').on('submit', function() {
-		var $item = $('#admin_roadmap_threshold');
-		var value = parseInt($item.val(), 10);
+		let $item = $('#admin_roadmap_threshold');
+		let value = parseInt($item.val(), 10);
 		if (!isNaN(value)) {
 			currentRoom.threshold.set(value);
 			$item.val('');
@@ -315,7 +317,7 @@ $(() => {
 
 	// upload / download
 	$('#roadmap_items_download').on('click', function() {
-		var content = JSON.stringify({
+		let content = JSON.stringify({
 			ref: currentRoom.storeReference,
 			store: currentRoom.store,
 			threshold: currentRoom.thresholdValue
@@ -327,16 +329,16 @@ $(() => {
 	});
 	$('body')
 		.on('dragover', function(event) {
-			var originalEvent = event.originalEvent;
+			let originalEvent = event.originalEvent;
 			originalEvent.dataTransfer.dropEffect = 'copy';
 			return false;
 		})
 		.on('drop', function(event) {
-			var originalEvent = event.originalEvent;
-			var file = originalEvent.dataTransfer.files[0];
-			var reader = new FileReader();
+			let originalEvent = event.originalEvent;
+			let file = originalEvent.dataTransfer.files[0];
+			let reader = new FileReader();
 			reader.onload = function(e) {
-				var data = null;
+				let data = null;
 				try {
 					data = JSON.parse(e.target.result);
 				} catch (X_x) {
@@ -356,7 +358,7 @@ $(() => {
 	// items handlers
 	function swap(direction) {
 		return function() {
-			var index = $(this).parents('.roadmap-item').data('index');
+			let index = $(this).parents('.roadmap-item').data('index');
 			if (index === null) {
 				return false;
 			}
@@ -370,7 +372,7 @@ $(() => {
 		.on('click', '.roadmap-item-up', swap(-1))
 		.on('click', '.roadmap-item-down', swap(1))
 		.on('click', '.roadmap-item-delete', function() {
-			var index = $(this).parents('.roadmap-item').data('index');
+			let index = $(this).parents('.roadmap-item').data('index');
 			currentRoom.store.splice(index, 1);
 			currentRoom.broadcast();
 			return false;
@@ -439,7 +441,7 @@ $(() => {
 
 		event.preventDefault();
 		// toggle display
-		$(this).hide();
+		$(this).addClass('hidden');
 		$('#welcome .progress').removeClass('hidden');
 		var login = $('#visa_input').val();
 
@@ -450,10 +452,6 @@ $(() => {
 			}
 			var uid = authData.uid;
 			base.child('users/' + uid).set(login);
-			$('#welcome').hide();
-			$('#welcome form').show();
-			$('#welcome').addClass('hidden');
-			$('#welcome .progress').addClass('hidden');
 		});
 	});
 	$('#nav_logout').on('click', function() {
