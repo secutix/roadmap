@@ -1,20 +1,19 @@
 /*global $ Firebase c3:true*/
 import * as helper from './helper';
 import * as view from './view';
+import * as room from './room';
 
 $(function() {
 
-	var hash = 'room_' + window.location.hash.replace(/[\#\.\[\]\$]/g, '');
+	let hash = 'room_' + window.location.hash.replace(/[\#\.\[\]\$]/g, '');
 	// DEV - PROD switch
-	var baseDomain = window.location.host.indexOf('localhost') !== -1 ? 'roadmap2' : 'amber-torch-7267';
+	let baseDomain = window.location.host.indexOf('localhost') !== -1 ? 'roadmap2' : 'amber-torch-7267';
 
-	var base = new Firebase('https://' + baseDomain + '.firebaseio.com/');
-	var room = base.child(hash);
-	var roadmap = room.child('roadmap');
-	var reference = room.child('reference');
-	var threshold = room.child('threshold');
-	var history = room.child('history');
-	var presence = room.child('presence');
+	let base = new Firebase('https://' + baseDomain + '.firebaseio.com/');
+	let {
+		roadmap, reference, threshold, history, presence
+	} = room.getRoom(base, hash);
+
 
 	/**
 	 *
@@ -79,7 +78,7 @@ $(function() {
 
 				//  online status
 				var amOnline = base.child('.info/connected');
-				var userRef = room.child('presence/' + visa);
+				var userRef = presence.child(visa);
 				amOnline.on('value', function(snapshot) {
 					if (snapshot.val()) {
 						userRef.onDisconnect().remove();
