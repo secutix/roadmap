@@ -3,7 +3,7 @@ html, body {
 }
 body {
     background: #eee;
-    font-family: Lato, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 footer {
     position: fixed;
@@ -11,6 +11,22 @@ footer {
     width: 100%;
     left: 0;
 }
+
+/* BASICS */
+
+.btn-special {
+    border: solid 1px white;
+    background: transparent;
+    color: white;
+    padding: 10px;
+    font-size: 18px;
+}
+.btn-special:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* WELCOME */
+
 #welcome {
     height: 100%;
     width: 100%;
@@ -38,17 +54,6 @@ footer {
     color: white;
     margin-bottom: 25px;
 }
-#welcome .btn {
-    border: solid 1px white;
-    background: transparent;
-    color: white;
-    padding: 10px;
-    font-size: 18px;
-}
-#welcome .btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
 #main {
     margin-bottom: 30px;
 }
@@ -205,6 +210,9 @@ footer {
 
 /* ADMIN */
 
+#visa, #room_name {
+    color: #BBB;
+}
 .admin .roadmap-item-delete {
     display: inline;
 }
@@ -332,4 +340,31 @@ footer {
 }
 #stats_less_ref .stats-card-icon span {
     background-image: url(images/alliance.svg);
+}
+
+/* NEW ROOM */
+
+#new_room_overlay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+#new_room_overlay > div {
+    width: 50%;
+    padding: 0 20px 10px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    min-width: 300px;
+    max-width: 600px;
+}
+#new_room_overlay .well {
+    background: transparent;
+    border-color: #666;
+    color: #AAA;
 }

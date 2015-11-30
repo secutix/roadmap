@@ -21,6 +21,8 @@
                 </a>
                 Signed in as
                 <span id="visa"></span>
+                in
+                <span id="room_name"></span>
             </p>
             <ul class="nav navbar-nav navbar-right hidden-xs">
                 <li><a href="#" id="nav_stats" class="hidden">stats</a></li>
@@ -70,7 +72,7 @@
                     <input type="text" class="form-control input-lg" id="room_input" placeholder="Room name">
                 </div>
                 <div class="text-center">
-                    <button type="submit" class="btn btn-default btn-block">Enter</button>
+                    <button type="submit" class="btn btn-special btn-block">Enter</button>
                 </div>
             </form>
             <div class="progress hidden">
@@ -263,6 +265,24 @@
                 <div id="chart"></div>
             </div>
         </article>
+    </section>
+
+    <section id="new_room_overlay" class="hidden">
+        <div>
+            <h3>New room
+                <span></span> created!</h3>
+            <p>You just created a new room. Share the url of the room and start organizing your roadmap.</p>
+            <p class="text-center">
+                <a id="new_room_link" target="_blank" title="New room link"></a>
+            </p>
+            <p class="well">
+                <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                The admin bar contains all the tools to administrate the room: create new elements, tag an existing roadmap as the reference, and export the roadmap. To import an existing roadmap, just drag it on the page.
+            </p>
+            <p class="text-center">
+                <a href="#" id="new_room_continue" class="btn btn-special">Continue</a>
+            </p>
+        </div>
     </section>
 
 

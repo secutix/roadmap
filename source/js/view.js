@@ -123,10 +123,11 @@ export function loginView(hash) {
 	$('#room_input').toggleClass('hidden', !!hash);
 }
 
-export function roadmapView(visa) {
+export function roadmapView(visa, roomName) {
 	$('#main, nav, footer').removeClass('hidden');
 	$('#welcome').addClass('hidden');
 	$('#visa').text(visa);
+	$('#room_name').text(roomName);
 }
 
 /**

@@ -86,11 +86,14 @@ base.onAuth(function(authData) {
 
 			// build room
 			if (!hash) {
-				if (roomNameFromInput) {
+				if (roomName) {
 					let ref = base.child('rooms').push();
 					ref.set(roomName);
 					hash = ref.toString().replace(/.*\/([^\/]+)$/g, '$1');
 					window.location.hash = hash;
+					$('#new_room_overlay').removeClass('hidden');
+					$('#new_room_link').attr('href', window.location.href)
+						.text(window.location.href);
 				} else {
 					// logout
 					base.unauth();
@@ -98,12 +101,18 @@ base.onAuth(function(authData) {
 				}
 			}
 
-			base.child('rooms/' + hash).once('value', function(data) {
-				roomName = data.val();
+			base.child('rooms/' + hash).once('value', function(roomData) {
+				roomName = roomData.val();
+				// room does not exists
+				if (!roomName) {
+					// logout
+					base.unauth();
+					return;
+				}
 				currentRoom = new Room(base, 'room_' + hash, visa);
 				linkRoom(currentRoom);
 				// update display
-				view.roadmapView(visa);
+				view.roadmapView(visa, roomName);
 			});
 
 		});
@@ -480,6 +489,13 @@ $(() => {
 	});
 	$('#nav_toggle').on('click', function() {
 		$('nav .navbar-right').toggleClass('hidden-xs');
+		return false;
+	});
+
+	// new room handlers
+	$('#new_room_continue').on('click', function() {
+		$('#new_room_overlay').addClass('hidden');
+		return false;
 	});
 
 });
