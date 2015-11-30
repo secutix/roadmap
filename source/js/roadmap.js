@@ -1,98 +1,57 @@
-/*global $ Firebase c3:true*/
+/*global Firebase:true*/
 import * as helper from './helper';
 import * as view from './view';
+import Room from './room';
+import $ from 'jquery';
 
-$(function() {
+// DEV - PROD switch
+const baseDomain = window.location.host.indexOf('localhost') !== -1 ? 'roadmap2' : 'amber-torch-7267';
+const base = new Firebase('https://' + baseDomain + '.firebaseio.com/');
 
-	var hash = 'room_' + window.location.hash.replace(/[\#\.\[\]\$]/g, '');
-	// DEV - PROD switch
-	var baseDomain = window.location.host.indexOf('localhost') !== -1 ? 'roadmap2' : 'amber-torch-7267';
+/**
+ *
+ * SHARED VARS
+ *
+ */
 
-	var base = new Firebase('https://' + baseDomain + '.firebaseio.com/');
-	var room = base.child(hash);
-	var roadmap = room.child('roadmap');
-	var reference = room.child('reference');
-	var threshold = room.child('threshold');
-	var history = room.child('history');
-	var presence = room.child('presence');
+let currentRoom = null;
+let showingStats = false;
+let visa = null;
+let roomName = null;
 
-	/**
-	 *
-	 * SHARED VARS
-	 *
-	 */
+/**
+ *
+ * FUNCTIONAL
+ *
+ */
 
-	var store = [];
-	var storeReference = [];
-	var thresholdValue = 0;
-	var showingStats = false;
-
-	/**
-	 *
-	 * FUNCTIONAL
-	 *
-	 */
-
+function linkRoom(room) {
+	let {
+		roadmap, reference, threshold, history, presence
+	} = room;
 	roadmap.on('value', function(newStoreResp) {
-		store = newStoreResp.val() || [];
-		view.renderRoadmap(store, thresholdValue);
+		room.store = newStoreResp.val() || [];
+		view.renderRoadmap(room.store, room.thresholdValue);
 	});
 	reference.on('value', function(data) {
-		storeReference = data.val() || [];
-		view.renderReference(storeReference, thresholdValue);
-
+		room.storeReference = data.val() || [];
+		view.renderReference(room.storeReference, room.thresholdValue);
 	});
 	threshold.on('value', function(data) {
-		thresholdValue = data.val();
-		view.renderRoadmap(store, thresholdValue);
-		view.renderReference(storeReference, thresholdValue);
+		room.thresholdValue = data.val();
+		view.renderRoadmap(room.store, room.thresholdValue);
+		view.renderReference(room.storeReference, room.thresholdValue);
 	});
-
-	function broadcast() {
-		roadmap.set(store);
-	}
 	history.limitToLast(1).on('child_added', function(childSnapshot) {
 		var event = childSnapshot.val();
-		store.forEach(function(text, index) {
+		room.store.forEach(function(text, index) {
 			if (text === event.value) {
 				view.renderActionNotification(index, event);
 			}
 		});
 		// active user tracking
 		$('#user_' + event.visa).removeClass('user-active');
-		setTimeout(function() {
-			$('#user_' + event.visa).addClass('user-active');
-		}, 10);
-	});
-
-	// login & presence
-	var visa;
-	base.onAuth(function(authData) {
-		if (authData) {
-			var uid = authData.uid;
-			console.log('Authenticated user with uid:', uid);
-			base.child('users/' + uid).on('value', function(data) {
-				visa = data.val();
-				$('#main, nav, footer').removeClass('hidden');
-				$('#welcome').addClass('hidden');
-				$('#visa').text(visa);
-
-				//  online status
-				var amOnline = base.child('.info/connected');
-				var userRef = room.child('presence/' + visa);
-				amOnline.on('value', function(snapshot) {
-					if (snapshot.val()) {
-						userRef.onDisconnect().remove();
-						userRef.set(true);
-					}
-				});
-			});
-		} else {
-			$('#welcome').removeClass('hidden');
-			$('#visa_input').focus();
-			$('#main, #stats, nav, footer').addClass('hidden');
-			$('#admin_block').addClass('hidden');
-		}
+		setTimeout(() => $('#user_' + event.visa).addClass('user-active'), 10);
 	});
 	presence.on('value', function(data) {
 		if (data) {
@@ -100,283 +59,247 @@ $(function() {
 		}
 	});
 
-	/**
-	 *
-	 * CHARTING
-	 *
-	 */
-	var chart = c3.generate({
-		data: {
-			x: 'x',
-			columns: [
-				['x'],
-			],
-			type: 'area-spline'
-		},
-		axis: {
-			y: {
-				padding: 0
-			},
-			x: {
-				tick: {
-					format: function(x) {
-						var time = x * 10000;
-						var date = new Date(time);
-						return helper.format2(date.getHours()) + ':' + helper.format2(date.getMinutes());
-					}
-				}
+	let historyLength = 0;
+	history.on('child_added', function() {
+		// show menu link if enough history
+		if (historyLength !== -1) {
+			if (historyLength++ > 10) {
+				$('#nav_stats').removeClass('hidden');
+				historyLength = -1;
+			} else {
+				$('#nav_stats').addClass('hidden');
 			}
-		},
-		transition: {
-			duration: 100
 		}
 	});
+}
 
 
-	var times = [];
-	var saved = [];
-	var users = {};
-	var userStats = {};
-	var itemStats = {};
-	var nbPoints = 60;
-	var historyLength = 0;
+// login & presence
+base.onAuth(function(authData) {
+	let hash = window.location.hash.replace(/[\#\.\[\]\$]/g, '');
+	if (authData) {
+		let uid = authData.uid;
+		console.log('Authenticated user with uid:', uid);
+		base.child('users/' + uid).on('value', function(data) {
+			visa = data.val();
+			roomName = $('#room_input').val();
 
-	history.on('child_added', function(childSnapshot) {
-		var event = childSnapshot.val();
-		var time = event.time;
-		var now = Date.now();
+			// build room
+			if (!hash) {
+				if (roomName) {
+					let ref = base.child('rooms').push();
+					ref.set(roomName);
+					hash = ref.toString().replace(/.*\/([^\/]+)$/g, '$1');
+					window.location.hash = hash;
+					$('#new_room_overlay').removeClass('hidden');
+					$('#new_room_link').attr('href', window.location.href)
+						.text(window.location.href);
+				} else {
+					// logout
+					base.unauth();
+					return;
+				}
+			}
 
-		// filter event which are too old (>2h)
-		if (now - time > 7200000) {
+			base.child('rooms/' + hash).once('value', function(roomData) {
+				roomName = roomData.val();
+				// room does not exists
+				if (!roomName) {
+					// logout
+					base.unauth();
+					return;
+				}
+				currentRoom = new Room(base, 'room_' + hash, visa);
+				linkRoom(currentRoom);
+				// update display
+				view.roadmapView(visa, roomName);
+			});
+
+		});
+	} else {
+		view.loginView(hash);
+	}
+});
+
+
+let times = [];
+let users = {};
+let nbPoints = 60;
+
+// running
+let statRules = [{
+	id: 'active',
+	fn: (user) => user.total
+}, {
+	id: 'up',
+	fn: (user) => user.up * 100 / user.total
+}, {
+	id: 'ref',
+	fn: (user) => user.toRef * 100 / user.total
+}];
+
+function showUserStats() {
+	let userStats = currentRoom.userStats;
+	let stats = statRules.map((rule) => ({
+		id: rule.id,
+		most: {
+			value: null,
+			visa: '???'
+		},
+		less: {
+			value: null,
+			visa: '???'
+		}
+	}));
+
+	// compute results
+	let handleRule = function(currentVisa) {
+		return function(rule, index) {
+			let value = rule.fn(userStats[currentVisa]);
+			let stat = stats[index];
+			let most = stat.most;
+			let less = stat.less;
+			if (most.value === null || value >= most.value) {
+				most.value = value;
+				most.visa = currentVisa;
+			}
+			if (less.value === null || value < less.value) {
+				less.value = value;
+				less.visa = currentVisa;
+			}
+		};
+	};
+	for (let userVisa in userStats) {
+		statRules.forEach(handleRule(userVisa));
+	}
+	// display results
+	stats.forEach(function(stat) {
+		$('#stats_most_' + stat.id + ' .stats-card-visa').text(stat.most.visa);
+		$('#stats_less_' + stat.id + ' .stats-card-visa').text(stat.less.visa);
+	});
+}
+
+function showItemStats() {
+	let totalSort = (a, b) => b.total - a.total;
+	let itemStats = currentRoom.itemStats;
+	// get top 3
+	let items = Object.keys(itemStats).map(key => itemStats[key])
+		.sort(totalSort);
+
+	for (let index = 0; index < 3; index++) {
+		let item = items[index];
+		let $container = $(`#stats_item_${index}`);
+		let $upContainer = $container.find('.stats-card-up');
+		let $downContainer = $container.find('.stats-card-down');
+		if (!item) {
+			$container.addClass('hidden');
+		} else {
+			$container.removeClass('hidden')
+				.find('.stats-card-name')
+				.text(item.text)
+				.attr('title', `${item.total} actions`);
+
+			// find who vote for/against
+			let upUser = Object.keys(item.upUsers).map(key => ({
+				total: item.upUsers[key],
+				visa: key
+			})).sort(totalSort)[0];
+			if (upUser) {
+				$upContainer.removeClass('hidden').find('.stats-card-item-visa').text(upUser.visa);
+			} else {
+				$upContainer.addClass('hidden');
+			}
+			let downUser = Object.keys(item.downUsers).map(key => ({
+				total: item.downUsers[key],
+				visa: key
+			})).sort(totalSort)[0];
+			if (downUser) {
+				$downContainer.removeClass('hidden').find('.stats-card-item-visa').text(downUser.visa);
+			} else {
+				$downContainer.addClass('hidden');
+			}
+		}
+	}
+}
+
+setInterval(function() {
+
+	if (!currentRoom) {
+		return;
+	}
+
+	let time = Math.floor(Date.now() / 10000);
+	let remaining = [];
+
+	// initial build
+	if (!times.length) {
+		for (let i = 0; i < nbPoints; i++) {
+			times.unshift(time - i);
+		}
+	}
+
+	// build new time
+	let index = times.indexOf(time);
+	if (index === -1) {
+		times.push(time);
+		times.shift();
+		for (let key in users) {
+			let stats = users[key];
+			stats.push(0);
+			stats.shift();
+
+		}
+	}
+
+	// reintegrate values
+	currentRoom.savedStats.forEach(function(event) {
+		let eventTime = Math.floor(event.time / 10000);
+		let eventVisa = event.visa;
+		let lastTime = times[times.length - 1];
+		let timeIndex = times.indexOf(eventTime);
+		// save this for later
+		if (timeIndex === -1 && eventTime > lastTime) {
+			remaining.push(event);
 			return;
 		}
-
-		saved.push(event);
-
-		var eventVisa = event.visa;
-		var direction = event.direction;
-		var text = event.value;
-		var user = helper.getOrSet(userStats, eventVisa, {
-			up: 0,
-			down: 0,
-			total: 0,
-			toRef: 0,
-			againstRef: 0
-		});
-		var item = helper.getOrSet(itemStats, text, {
-			up: 0,
-			total: 0,
-			upUsers: {},
-			downUsers: {},
-			text: text
-		});
-
-		user.total++;
-		item.total++;
-
-		if (direction > 0) {
-			user.down++;
-			helper.getOrSet(item.downUsers, eventVisa, 0);
-			item.downUsers[eventVisa]++;
-			if (event.index >= event.refIndex) {
-				user.againstRef++;
-			} else {
-				user.toRef++;
-			}
-		} else {
-			item.up++;
-			user.up++;
-			helper.getOrSet(item.upUsers, eventVisa, 0);
-			item.upUsers[eventVisa]++;
-			if (event.index <= event.refIndex) {
-				user.againstRef++;
-			} else {
-				user.toRef++;
-			}
+		let currentStats = users[eventVisa];
+		if (!currentStats) {
+			currentStats = times.map(function() {
+				return 0;
+			});
+			users[eventVisa] = currentStats;
 		}
-
-		// show menu link if enough history
-		if (historyLength !== -1 && historyLength++ > 10) {
-			$('#nav_stats').removeClass('hidden');
-			historyLength = -1;
-		}
+		let value = currentStats[index];
+		currentStats[index] = !value ? 1 : value + 1;
 	});
-	// running
-	var statRules = [{
-		id: 'active',
-		fn: function(user) {
-			return user.total;
-		}
-	}, {
-		id: 'up',
-		fn: function(user) {
-			return user.up * 100 / user.total;
-		}
-	}, {
-		id: 'ref',
-		fn: function(user) {
-			return user.toRef * 100 / user.total;
-		}
-	}];
+	currentRoom.savedStats = remaining;
 
-	function showUserStats() {
-		var stats = statRules.map(function(rule) {
-			return {
-				id: rule.id,
-				most: {
-					value: null,
-					visa: '???'
-				},
-				less: {
-					value: null,
-					visa: '???'
-				}
-			};
-		});
-		// compute results
-		var handleRule = function(currentVisa) {
-			return function(rule, index) {
-				var value = rule.fn(userStats[currentVisa]);
-				var stat = stats[index];
-				var most = stat.most;
-				var less = stat.less;
-				if (most.value === null || value >= most.value) {
-					most.value = value;
-					most.visa = currentVisa;
-				}
-				if (less.value === null || value < less.value) {
-					less.value = value;
-					less.visa = currentVisa;
-				}
-			};
-		};
-		for (var userVisa in userStats) {
-			statRules.forEach(handleRule(userVisa));
-		}
-		// display results
-		stats.forEach(function(stat) {
-			$('#stats_most_' + stat.id + ' .stats-card-visa').text(stat.most.visa);
-			$('#stats_less_' + stat.id + ' .stats-card-visa').text(stat.less.visa);
-		});
+	// dont process if not showing
+	if (!showingStats) {
+		return;
 	}
 
-	function showItemStats() {
-		let totalSort = (a, b) => b.total - a.total;
-		// get top 3
-		let items = Object.keys(itemStats).map(key => itemStats[key])
-			.sort(totalSort);
-
-		for (let index = 0; index < 3; index++) {
-			let item = items[index];
-			let $container = $(`#stats_item_${index}`);
-			let $upContainer = $container.find('.stats-card-up');
-			let $downContainer = $container.find('.stats-card-down');
-			if (!item) {
-				$container.addClass('hidden');
-			} else {
-				$container.removeClass('hidden')
-					.find('.stats-card-name')
-					.text(item.text)
-					.attr('title', `${item.total} actions`);
-
-				// find who vote for/against
-				let upUser = Object.keys(item.upUsers).map(key => ({
-					total: item.upUsers[key],
-					visa: key
-				})).sort(totalSort)[0];
-				if (upUser) {
-					$upContainer.removeClass('hidden').find('.stats-card-item-visa').text(upUser.visa);
-				} else {
-					$upContainer.addClass('hidden');
-				}
-				let downUser = Object.keys(item.downUsers).map(key => ({
-					total: item.downUsers[key],
-					visa: key
-				})).sort(totalSort)[0];
-				if (downUser) {
-					$downContainer.removeClass('hidden').find('.stats-card-item-visa').text(downUser.visa);
-				} else {
-					$downContainer.addClass('hidden');
-				}
-			}
-		}
+	// propagate to chart
+	let columns = [
+		['x'].concat(times)
+	];
+	for (let user in users) {
+		columns.push([user].concat(users[user]));
 	}
+	view.loadChart(columns);
 
-	setInterval(function() {
-		var time = Math.floor(Date.now() / 10000);
-		var remaining = [];
+	// update stats as well
+	showUserStats();
+	showItemStats();
 
-		// initial build
-		if (!times.length) {
-			for (var i = 0; i < nbPoints; i++) {
-				times.unshift(time - i);
-			}
-		}
+}, 2000);
 
-		// build new time
-		var index = times.indexOf(time);
-		if (index === -1) {
-			times.push(time);
-			times.shift();
-			for (var key in users) {
-				var stats = users[key];
-				stats.push(0);
-				stats.shift();
-
-			}
-		}
-
-		// reintegrate values
-		saved.forEach(function(event) {
-			var eventTime = Math.floor(event.time / 10000);
-			var eventVisa = event.visa;
-			var lastTime = times[times.length - 1];
-			var timeIndex = times.indexOf(eventTime);
-			// save this for later
-			if (timeIndex === -1 && eventTime > lastTime) {
-				remaining.push(event);
-				return;
-			}
-			var currentStats = users[eventVisa];
-			if (!currentStats) {
-				currentStats = times.map(function() {
-					return 0;
-				});
-				users[eventVisa] = currentStats;
-			}
-			var value = currentStats[index];
-			currentStats[index] = !value ? 1 : value + 1;
-		});
-		saved = remaining;
-
-		// dont process if not showing
-		if (!showingStats) {
-			return false;
-		}
-
-		// propagate to chart
-		var columns = [
-			['x'].concat(times)
-		];
-		for (var user in users) {
-			columns.push([user].concat(users[user]));
-		}
-		chart.load({
-			columns: columns
-		});
-
-		// update stats as well
-		showUserStats();
-		showItemStats();
-
-	}, 2000);
-
-	/**
-	 *
-	 * DOM HANDLERS
-	 *
-	 */
-
+/**
+ *
+ * DOM HANDLERS
+ *
+ */
+$(() => {
 	// roadmap handlers
 	$('#nav_admin').on('click', function() {
 		$('#admin_block').toggleClass('hidden');
@@ -385,35 +308,35 @@ $(function() {
 		return false;
 	});
 	$('#admin_add').on('submit', function() {
-		var $item = $('#admin_roadmap_item');
-		var value = $item.val();
+		let $item = $('#admin_roadmap_item');
+		let value = $item.val();
 		if (value) {
-			store.push(value);
+			currentRoom.store.push(value);
 			$item.val('');
-			broadcast();
+			currentRoom.broadcast();
 		}
 		return false;
 	});
 	$('#admin_threshold').on('submit', function() {
-		var $item = $('#admin_roadmap_threshold');
-		var value = parseInt($item.val(), 10);
+		let $item = $('#admin_roadmap_threshold');
+		let value = parseInt($item.val(), 10);
 		if (!isNaN(value)) {
-			threshold.set(value);
+			currentRoom.threshold.set(value);
 			$item.val('');
 		}
 		return false;
 	});
 	$('#nav_reference').on('click', function() {
-		reference.set(store);
+		currentRoom.reference.set(currentRoom.store);
 		return false;
 	});
 
 	// upload / download
 	$('#roadmap_items_download').on('click', function() {
-		var content = JSON.stringify({
-			ref: storeReference,
-			store: store,
-			threshold: thresholdValue
+		let content = JSON.stringify({
+			ref: currentRoom.storeReference,
+			store: currentRoom.store,
+			threshold: currentRoom.thresholdValue
 		});
 		helper.downloadAsFile(new Blob([content], {
 			type: 'application/json'
@@ -422,26 +345,26 @@ $(function() {
 	});
 	$('body')
 		.on('dragover', function(event) {
-			var originalEvent = event.originalEvent;
+			let originalEvent = event.originalEvent;
 			originalEvent.dataTransfer.dropEffect = 'copy';
 			return false;
 		})
 		.on('drop', function(event) {
-			var originalEvent = event.originalEvent;
-			var file = originalEvent.dataTransfer.files[0];
-			var reader = new FileReader();
+			let originalEvent = event.originalEvent;
+			let file = originalEvent.dataTransfer.files[0];
+			let reader = new FileReader();
 			reader.onload = function(e) {
-				var data = null;
+				let data = null;
 				try {
 					data = JSON.parse(e.target.result);
 				} catch (X_x) {
 					return;
 				}
 				if (data) {
-					threshold.set(data.threshold);
-					reference.set(data.ref);
-					store = data.store;
-					broadcast();
+					currentRoom.threshold.set(data.threshold);
+					currentRoom.reference.set(data.ref);
+					currentRoom.store = data.store;
+					currentRoom.broadcast();
 				}
 			};
 			reader.readAsText(file);
@@ -451,28 +374,12 @@ $(function() {
 	// items handlers
 	function swap(direction) {
 		return function() {
-			var index = $(this).parents('.roadmap-item').data('index');
+			let index = $(this).parents('.roadmap-item').data('index');
 			if (index === null) {
 				return false;
 			}
 			// swap values
-			var value = store[index];
-			store[index] = store[index + direction];
-			store[index + direction] = value;
-			broadcast();
-			// also save changed
-			if (visa) {
-				var refIndex = storeReference.indexOf(value);
-				var historyRef = history.push();
-				historyRef.set({
-					visa: visa,
-					index: index,
-					refIndex: refIndex,
-					value: value,
-					time: Firebase.ServerValue.TIMESTAMP,
-					direction: direction
-				});
-			}
+			currentRoom.swap(index, direction, visa);
 			return false;
 		};
 	}
@@ -481,9 +388,9 @@ $(function() {
 		.on('click', '.roadmap-item-up', swap(-1))
 		.on('click', '.roadmap-item-down', swap(1))
 		.on('click', '.roadmap-item-delete', function() {
-			var index = $(this).parents('.roadmap-item').data('index');
-			store.splice(index, 1);
-			broadcast();
+			let index = $(this).parents('.roadmap-item').data('index');
+			currentRoom.store.splice(index, 1);
+			currentRoom.broadcast();
 			return false;
 		})
 		.on('dragstart', '.roadmap-item', function(event) {
@@ -533,15 +440,15 @@ $(function() {
 			var originIndex = JSON.parse(originalEvent.dataTransfer.getData('application/json')).index;
 			// no index : push at the end
 			if (targetIndex !== 0 && !targetIndex) {
-				targetIndex = store.length;
+				targetIndex = currentRoom.store.length;
 			}
 			// removing will shift the index
 			if (originIndex < targetIndex) {
 				targetIndex--;
 			}
-			var item = store.splice(originIndex, 1);
-			store.splice(targetIndex, 0, item);
-			broadcast();
+			var item = currentRoom.store.splice(originIndex, 1);
+			currentRoom.store.splice(targetIndex, 0, item);
+			currentRoom.broadcast();
 			return false;
 		});
 
@@ -550,7 +457,7 @@ $(function() {
 
 		event.preventDefault();
 		// toggle display
-		$(this).hide();
+		$(this).addClass('hidden');
 		$('#welcome .progress').removeClass('hidden');
 		var login = $('#visa_input').val();
 
@@ -561,10 +468,6 @@ $(function() {
 			}
 			var uid = authData.uid;
 			base.child('users/' + uid).set(login);
-			$('#welcome').hide();
-			$('#welcome form').show();
-			$('#welcome').addClass('hidden');
-			$('#welcome .progress').addClass('hidden');
 		});
 	});
 	$('#nav_logout').on('click', function() {
@@ -586,6 +489,13 @@ $(function() {
 	});
 	$('#nav_toggle').on('click', function() {
 		$('nav .navbar-right').toggleClass('hidden-xs');
+		return false;
+	});
+
+	// new room handlers
+	$('#new_room_continue').on('click', function() {
+		$('#new_room_overlay').addClass('hidden');
+		return false;
 	});
 
 });

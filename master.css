@@ -1,11 +1,10 @@
 html, body {
     height: 100%;
 }
-
 body {
     background: #eee;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
-
 footer {
     position: fixed;
     bottom: 0;
@@ -13,28 +12,59 @@ footer {
     left: 0;
 }
 
-#welcome {
-    width: 300px;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    margin-left: -150px;
-    margin-top: -90px;
+/* BASICS */
+
+.btn-special {
+    border: solid 1px white;
+    background: transparent;
+    color: white;
+    padding: 10px;
+    font-size: 18px;
+}
+.btn-special:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
 
+/* WELCOME */
+
+#welcome {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: url(images/background.jpeg);
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+#welcome_background {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+#welcome_content {
+    width: 300px;
+    z-index: 2;
+}
+#welcome h2 {
+    color: white;
+    margin-bottom: 25px;
+}
 #main {
     margin-bottom: 30px;
 }
 
 /* ROADMAP */
 
-#roadmap_items h5,
-#reference_items h5 {
+#roadmap_items h5, #reference_items h5 {
     font-style: italic;
     color: #999;
     margin-top: 20px;
 }
-
 @keyframes changedItem {
     from {
         transform: scale(1.03);
@@ -54,13 +84,11 @@ footer {
     margin-bottom: -1px;
     background: white;
 }
-
 .roadmap-item > div {
     padding: 5px 10px;
     height: 32px;
     display: flex;
 }
-
 @keyframes goingUp {
     from {
         background: #dff0d8;
@@ -83,7 +111,6 @@ footer {
 .roadmap-item-notif-down {
     animation: goingDown 2s;
 }
-
 .roadmap-item-name {
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -98,7 +125,6 @@ footer {
 .roadmap-item-new {
     animation: changedItem 0.4s;
 }
-
 .roadmap-item-delete {
     color: #a94442;
     display: none;
@@ -113,7 +139,6 @@ footer {
 .roadmap-item:first-child .roadmap-item-down {
     margin-right: 24px;
 }
-
 @keyframes newAuthor {
     from {
         opacity: 1;
@@ -132,8 +157,9 @@ footer {
 }
 
 /* DnD */
+
 .roadmap-item-grab-handle {
-    display:none;
+    display: none;
     margin-right: 10px;
     margin-top: -6px;
     line-height: 32px;
@@ -178,37 +204,37 @@ footer {
     border: dashed 1px #aaa;
     background: rgba(256, 256, 256, 0.5);
 }
-
 #roadmap_items .roadmap-item:last-child {
     border: none;
 }
 
 /* ADMIN */
 
+#visa, #room_name {
+    color: #BBB;
+}
 .admin .roadmap-item-delete {
     display: inline;
 }
-
 .admin .roadmap-item-grab-handle {
     display: inline-block;
 }
 
 /* Prevent the text contents of draggable elements from being selectable. */
-.admin [draggable] {
-  -moz-user-select: none;
-  -khtml-user-select: none;
-  -webkit-user-select: none;
-  user-select: none;
-  /* Required to make elements draggable in old WebKit */
-  -khtml-user-drag: element;
-  -webkit-user-drag: element;
-}
 
+.admin [draggable] {
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    /* Required to make elements draggable in old WebKit */
+    -khtml-user-drag: element;
+    -webkit-user-drag: element;
+}
 #admin_block {
     margin-top: -20px;
     background: #333;
 }
-
 #admin_block input {
     background: #444;
     color: #eee;
@@ -261,7 +287,6 @@ footer {
     background: white;
     padding: 20px;
 }
-
 .stats-card {
     background: url(images/laurel.svg) no-repeat white;
     background-size: 120px;
@@ -273,44 +298,36 @@ footer {
     border: solid 1px #ddd;
     box-shadow: 0 4px 15px -10px black;
 }
-
 .stats-card-icon {
     font-size: 50px;
     font-weight: 600;
     color: #ccc;
     height: 60px;
 }
-
-.stats-card-visa,
-.stats-card-name {
+.stats-card-visa, .stats-card-name {
     font-size: 30px;
     margin-top: 30px;
     text-transform: uppercase;
 }
-
 .stats-card-legend {
     text-transform: uppercase;
     font-size: 10px;
     color: #aaa;
     margin-top: -5px;
 }
-
 .stats-card-up {
     float: left;
     width: 45%;
     text-align: right;
     opacity: 0.7;
 }
-
 .stats-card-down {
     float: right;
     width: 45%;
     text-align: left;
     opacity: 0.7;
 }
-
-#stats_most_ref .stats-card-icon span,
-#stats_less_ref .stats-card-icon span {
+#stats_most_ref .stats-card-icon span, #stats_less_ref .stats-card-icon span {
     display: block;
     height: 55px;
     background-size: contain;
@@ -321,7 +338,33 @@ footer {
 #stats_most_ref .stats-card-icon span {
     background-image: url(images/empire.svg);
 }
-
 #stats_less_ref .stats-card-icon span {
     background-image: url(images/alliance.svg);
+}
+
+/* NEW ROOM */
+
+#new_room_overlay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+#new_room_overlay > div {
+    width: 50%;
+    padding: 0 20px 10px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    min-width: 300px;
+    max-width: 600px;
+}
+#new_room_overlay .well {
+    background: transparent;
+    border-color: #666;
+    color: #AAA;
 }

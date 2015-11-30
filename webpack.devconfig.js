@@ -1,5 +1,4 @@
 var path = require('path');
-var webpack = require('webpack');
 
 module.exports = {
 	devtool: 'source-map',
@@ -11,14 +10,6 @@ module.exports = {
 		path: path.join(__dirname, 'dist'),
 		filename: 'roadmap.js'
 	},
-	plugins: [
-		new webpack.optimize.UglifyJsPlugin({
-			minimize: true,
-			compressor: {
-				warnings: false
-			}
-		})
-	],
 	module: {
 		loaders: [{
 			test: /\.js$/,
