@@ -3,6 +3,7 @@ html, body {
 }
 body {
     background: #eee;
+    font-family: Lato, 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 footer {
     position: fixed;

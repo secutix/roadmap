@@ -17,6 +17,7 @@ const base = new Firebase('https://' + baseDomain + '.firebaseio.com/');
 let currentRoom = null;
 let showingStats = false;
 let visa = null;
+let roomName = null;
 
 /**
  *
@@ -76,29 +77,35 @@ function linkRoom(room) {
 // login & presence
 base.onAuth(function(authData) {
 	let hash = window.location.hash.replace(/[\#\.\[\]\$]/g, '');
-	if (hash) {
-		base.child('rooms/' + hash).once('value', function(data) {
-			let roomName = data.val();
-			$('#room_input').val(roomName);
-		});
-	}
 	if (authData) {
 		let uid = authData.uid;
 		console.log('Authenticated user with uid:', uid);
 		base.child('users/' + uid).on('value', function(data) {
 			visa = data.val();
+			roomName = $('#room_input').val();
+
 			// build room
 			if (!hash) {
-				let ref = base.child('rooms').push();
-				ref.set($('#room_input').val());
-				hash = ref.toString().replace(/.*\/([^\/]+)$/g, '$1');
-				window.location.hash = hash;
+				if (roomNameFromInput) {
+					let ref = base.child('rooms').push();
+					ref.set(roomName);
+					hash = ref.toString().replace(/.*\/([^\/]+)$/g, '$1');
+					window.location.hash = hash;
+				} else {
+					// logout
+					base.unauth();
+					return;
+				}
 			}
 
-			currentRoom = new Room(base, 'room_' + hash, visa);
-			linkRoom(currentRoom);
-			// update display
-			view.roadmapView(visa);
+			base.child('rooms/' + hash).once('value', function(data) {
+				roomName = data.val();
+				currentRoom = new Room(base, 'room_' + hash, visa);
+				linkRoom(currentRoom);
+				// update display
+				view.roadmapView(visa);
+			});
+
 		});
 	} else {
 		view.loginView(hash);
