@@ -1,20 +1,6 @@
-var path = require('path');
+// copy prod config
+var config = require('./webpack.config');
+// remove minification
+config.plugins = null;
 
-module.exports = {
-	devtool: 'source-map',
-	resolve: {
-		root: __dirname + '/source'
-	},
-	entry: './source/js/roadmap.js',
-	output: {
-		path: path.join(__dirname, 'dist'),
-		filename: 'roadmap.js'
-	},
-	module: {
-		loaders: [{
-			test: /\.js$/,
-			loader: 'babel-loader',
-			include: path.join(__dirname, 'source')
-		}]
-	}
-};
+module.exports = config;

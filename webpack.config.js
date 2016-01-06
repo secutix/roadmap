@@ -3,13 +3,28 @@ var webpack = require('webpack');
 
 module.exports = {
 	devtool: 'source-map',
-	resolve: {
-		root: __dirname + '/source'
-	},
-	entry: './source/js/roadmap.js',
+	context: path.join(__dirname, 'source'),
+	entry: './js/roadmap.js',
 	output: {
 		path: path.join(__dirname, 'dist'),
-		filename: 'roadmap.js'
+		publicPath: '/dist/',
+		filename: 'roadmap.js',
+		chunkFilename: '[chunkhash].[name].js'
+	},
+	module: {
+		loaders: [{
+			test: /\.js$/,
+			loader: 'babel-loader',
+			include: path.join(__dirname, 'source')
+		}, {
+			test: /\.scss$/,
+			loaders: ['style-loader', 'css-loader', 'sass-loader'],
+			include: path.join(__dirname, 'source')
+		}, {
+			test: /\.(png|jpg|svg)$/,
+			loader: 'file-loader',
+			include: path.join(__dirname, 'source')
+		}]
 	},
 	plugins: [
 		new webpack.optimize.UglifyJsPlugin({
@@ -18,12 +33,5 @@ module.exports = {
 				warnings: false
 			}
 		})
-	],
-	module: {
-		loaders: [{
-			test: /\.js$/,
-			loader: 'babel-loader',
-			include: path.join(__dirname, 'source')
-		}]
-	}
+	]
 };

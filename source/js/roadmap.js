@@ -1,4 +1,5 @@
-/*global Firebase:true*/
+/*global Firebase,require:true*/
+
 import * as helper from './helper';
 import * as view from './view';
 import Room from './room';
@@ -286,7 +287,10 @@ setInterval(function() {
 	for (let user in users) {
 		columns.push([user].concat(users[user]));
 	}
-	view.loadChart(columns);
+
+	require.ensure('./stats/view', function(require) {
+		require('./stats/view').loadChart(columns);
+	});
 
 	// update stats as well
 	showUserStats();
@@ -476,15 +480,22 @@ $(() => {
 	});
 
 	$('#nav_stats, #stats h2 .close').on('click', function() {
-		$('#stats, #main').toggleClass('hidden');
-		showingStats = !showingStats;
 		if (showingStats) {
-			showUserStats();
-			showItemStats();
-			if ($('#main').hasClass('admin')) {
-				$('#nav_admin').trigger('click');
-			}
+			$('#stats, #main').toggleClass('hidden');
+			showingStats = false;
+		} else {
+			require.ensure('./stats/view', function(require) {
+				require('./stats/view');
+				$('#stats, #main').toggleClass('hidden');
+				showingStats = true;
+				showUserStats();
+				showItemStats();
+				if ($('#main').hasClass('admin')) {
+					$('#nav_admin').trigger('click');
+				}
+			});
 		}
+
 		return false;
 	});
 	$('#nav_toggle').on('click', function() {
